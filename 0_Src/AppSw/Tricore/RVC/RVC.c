@@ -108,6 +108,7 @@ TODO:
 
 /*********************** Global Variables ****************************/
 static const float32 frontDist_initial = 0.35f;
+static boolean rtds = FALSE;
 
 RVC_t RVC = 
 {
@@ -600,7 +601,6 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 	*/
 	static AmkState_t AmkState = AmkState_S0;
 	static AmkState_t pastAmkState = AmkState_S0;
-	static boolean rtds = FALSE;
 
 	/*Store past AMK State*/
 	pastAmkState = AmkState;
@@ -664,7 +664,7 @@ IFX_INLINE void RVC_slipComputation(void)
 
 IFX_INLINE void RVC_getTorqueRequired(void)
 {
-	if(SDP_PedalBox.apps.isValueOk)		//APPS Plausibility check
+	if(SDP_PedalBox.apps.isValueOk && !rtds)		//APPS Plausibility check
 	{
 		RVC.torque.controlled = (RVC.torque.desired = RVC_PedalMap_lut_getResult(SDP_PedalBox.apps.pps));
 	}
@@ -796,10 +796,8 @@ IFX_INLINE void RVC_torqueSignalGeneration(void)
 #ifdef AMK_TEST
 	while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));	//Wait for the mutex
 	{
-		if(RVC.readyToDrive == RVC_ReadyToDrive_status_run)
-			AmkInverterPublic.r2d = TRUE;
-		else
-			AmkInverterPublic.r2d = FALSE;
+		if(RVC.readyToDrive != RVC_ReadyToDrive_status_run)
+			AmkInverterPublic.r2d = AmkState_S0;
 		
 		// AmkInverterPublic.fl = RVC.torque.controlled;
 		// AmkInverterPublic.fr = RVC.torque.controlled;
