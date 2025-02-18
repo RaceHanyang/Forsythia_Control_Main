@@ -12,7 +12,6 @@
 #include "SchedulerTask_Cpu2.h"
 #include "AmkInverter_can.h"
 #include "OrionBms2.h"
-#include "SteeringWheel.h"
 #include "AdcSensor.h"
 #include "PedalBox.h"
 /******************************************************************************/

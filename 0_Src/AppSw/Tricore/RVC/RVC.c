@@ -41,7 +41,6 @@ TODO:
 #include "RVC_r2dSound.h"
 #include "TorqueVectoring/TorqueVectoring.h"
 
-#include "SteeringWheel.h"
 #include "AmkInverter_can.h"
 #include "DashBoardCan.h"
 
@@ -652,9 +651,9 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 
 IFX_INLINE void RVC_slipComputation(void)
 {
-	RVC.slip.axle = SDP_WheelSpeed.velocity.rearAxle/SDP_WheelSpeed.velocity.frontAxle;
-	RVC.slip.left = SDP_WheelSpeed.wssRL.wheelLinearVelocity/SDP_WheelSpeed.wssFL.wheelLinearVelocity;
-	RVC.slip.right = SDP_WheelSpeed.wssRR.wheelLinearVelocity/SDP_WheelSpeed.wssFR.wheelLinearVelocity;
+//	RVC.slip.axle = SDP_WheelSpeed.velocity.rearAxle/SDP_WheelSpeed.velocity.frontAxle;
+//	RVC.slip.left = SDP_WheelSpeed.wssRL.wheelLinearVelocity/SDP_WheelSpeed.wssFL.wheelLinearVelocity;
+//	RVC.slip.right = SDP_WheelSpeed.wssRR.wheelLinearVelocity/SDP_WheelSpeed.wssFR.wheelLinearVelocity;
 	// RVC.diff.rear
 	if(isnan(RVC.slip.axle)||isnan(RVC.slip.left)||isnan(RVC.slip.right)) 
 	{
@@ -914,29 +913,6 @@ IFX_INLINE void RVC_updatePwmSignal(void)
 	HLD_GtmTomPwm_setTriggerPointFloat(&RVC.out.decel_rearRight, RVC.pwmDuty.rearRightDec);
 }
 
-IFX_INLINE void VariableUpdateRoutine_steeringWheel(void)
-{
-	SteeringWheel_public.shared.data.vehicleSpeed = SDP_WheelSpeed.velocity.chassis;
-	SteeringWheel_public.shared.data.apps = SDP_PedalBox.apps.pps;
-	SteeringWheel_public.shared.data.bpps = SDP_PedalBox.bpps.pps;
-	if(RVC.readyToDrive == RVC_ReadyToDrive_status_run)
-		SteeringWheel_public.shared.data.isReadyToDrive = TRUE;
-	else
-		SteeringWheel_public.shared.data.isReadyToDrive = FALSE;
-	SteeringWheel_public.shared.data.isAppsChecked = RVC.R2d.isAppsChecked;
-	SteeringWheel_public.shared.data.isBppsChecked1 = RVC.R2d.isBppsChecked1;
-	SteeringWheel_public.shared.data.isBppsChecked2 = RVC.R2d.isBppsChecked2;
-	if(SDP_PedalBox.apps.isValueOk == TRUE)
-		SteeringWheel_public.shared.data.appsError = FALSE;
-	else
-		SteeringWheel_public.shared.data.appsError = TRUE;
-	if(SDP_PedalBox.bpps.isValueOk == TRUE)
-		SteeringWheel_public.shared.data.bppsError = FALSE;
-	else 
-		SteeringWheel_public.shared.data.bppsError = TRUE;
-	SteeringWheel_public.shared.data.lvBatteryVoltage = RVC.LvBattery_Voltage.value;
-}
-
 IFX_INLINE void VariableUpdateRoutine_dashboard(void)
 {
 	// DashBoard_public.shared.data.vcu			= RVC.vcuOk.value;
@@ -956,27 +932,6 @@ volatile uint32 updateErrorCount_dashboard = 0;
 
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
-	// static uint32 updateErrorCount = 0;
-	// if(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex))	//Do not wait.
-	// {
-	// 	VariableUpdateRoutine_steeringWheel();
-	// 	IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-	// 	updateErrorCount_steeringWheel = 0;
-	// }
-	// else if(updateErrorCount_steeringWheel < VAR_UPDATE_ERROR_LIM)
-	// {
-	// 	updateErrorCount_steeringWheel++;
-	// }
-	// else
-	// {
-	// 	while(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex));
-	// 	{
-	// 		VariableUpdateRoutine_steeringWheel();
-	// 		IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-	// 	}
-	// 	updateErrorCount_steeringWheel = 0;
-	// }
-
 	if(IfxCpu_acquireMutex(&DashBoard_public.shared.mutex))	//Do not wait
 	{
 		VariableUpdateRoutine_dashboard();
