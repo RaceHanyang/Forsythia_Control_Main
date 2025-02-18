@@ -599,21 +599,22 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 		IfxPort_setPinLow(FWD_OUT.port, FWD_OUT.pinIndex);
 	}
 	*/
-	static AmkState_t AmkState = AmkState_S0;
-	static AmkState_t pastAmkState = AmkState_S0;
+
+	static boolean curR2d = FALSE;
+	static boolean pastR2d = FALSE;
 
 	/*Store past AMK State*/
-	pastAmkState = AmkState;
+	pastR2d = curR2d;
 
 	/*Get current AMK State*/
 	while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));	//Wait for the mutex
 	{
-		AmkState = AmkInverterPublic.r2d;
+		curR2d = AmkInverterPublic.r2d;
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
 
 	/*Update RTD state*/
-	if(AmkState == AmkState_RTD)
+	if(curR2d == TRUE)
 	{
 		RVC.readyToDrive = RVC_ReadyToDrive_status_run;
 	}
@@ -623,8 +624,11 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 	}
 
 	/*Invoke RTDS*/
-	if((pastAmkState != AmkState_RTD) && (AmkState == AmkState_RTD))
+	if((pastR2d != curR2d) && (curR2d == TRUE))
 	{
+		// Turn off the drivetrain befor entering the ready-to-drive sound
+		RVC.torque.controlled = 0;
+		// Enter ready-to-drive sound
 		rtds = TRUE;
 	}
 
@@ -797,7 +801,7 @@ IFX_INLINE void RVC_torqueSignalGeneration(void)
 	while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));	//Wait for the mutex
 	{
 		if(RVC.readyToDrive != RVC_ReadyToDrive_status_run)
-			AmkInverterPublic.r2d = AmkState_S0;
+			AmkInverterPublic.r2d = FALSE;
 		
 		// AmkInverterPublic.fl = RVC.torque.controlled;
 		// AmkInverterPublic.fr = RVC.torque.controlled;
@@ -810,6 +814,8 @@ IFX_INLINE void RVC_torqueSignalGeneration(void)
 		AmkInverterPublic.rr = RVC.torque.rearRight;
 
 		AmkInverterPublic.brakeOn = RVC.brakeOn.tot;
+
+		AmkInverterPublic.acceleraing = (RVC.torque.desired > 0) ? TRUE : FALSE;
 
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
@@ -933,12 +939,16 @@ IFX_INLINE void VariableUpdateRoutine_steeringWheel(void)
 
 IFX_INLINE void VariableUpdateRoutine_dashboard(void)
 {
-	DashBoard_public.shared.data.bmsOk = RVC.bmsOk.value;
-	DashBoard_public.shared.data.imdOk = RVC.imdOk.value;
-	DashBoard_public.shared.data.bspdOk = RVC.bspdOk.value;
-	DashBoard_public.shared.data.sdcSenFinal = RVC.sdcSenFinal.value;
-	DashBoard_public.shared.data.brakeOn = RVC.brakeOn.tot;
-	DashBoard_public.shared.data.tsalOn = RVC.tsalOn.value;
+	// DashBoard_public.shared.data.vcu			= RVC.vcuOk.value;
+	DashBoard_public.shared.data.bmsOk 			= RVC.bmsOk.value;
+	DashBoard_public.shared.data.imdOk 			= RVC.imdOk.value;
+	DashBoard_public.shared.data.bspdOk 		= RVC.bspdOk.value;
+	DashBoard_public.shared.data.appsOk 		= SDP_PedalBox.apps.isValueOk;
+	DashBoard_public.shared.data.bppsOk 		= SDP_PedalBox.bpps.isValueOk;
+	DashBoard_public.shared.data.sdcSenFinal 	= RVC.sdcSenFinal.value;
+	DashBoard_public.shared.data.rtdOn 			= (RVC.readyToDrive == RVC_ReadyToDrive_status_run);
+	DashBoard_public.shared.data.brakeOn 		= RVC.brakeOn.tot;
+	DashBoard_public.shared.data.tsalOn 		= RVC.tsalOn.value;
 }
 
 volatile uint32 updateErrorCount_steeringWheel = 0;
@@ -947,25 +957,25 @@ volatile uint32 updateErrorCount_dashboard = 0;
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
 	// static uint32 updateErrorCount = 0;
-	if(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex))	//Do not wait.
-	{
-		VariableUpdateRoutine_steeringWheel();
-		IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-		updateErrorCount_steeringWheel = 0;
-	}
-	else if(updateErrorCount_steeringWheel < VAR_UPDATE_ERROR_LIM)
-	{
-		updateErrorCount_steeringWheel++;
-	}
-	else
-	{
-		while(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex));
-		{
-			VariableUpdateRoutine_steeringWheel();
-			IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-		}
-		updateErrorCount_steeringWheel = 0;
-	}
+	// if(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex))	//Do not wait.
+	// {
+	// 	VariableUpdateRoutine_steeringWheel();
+	// 	IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
+	// 	updateErrorCount_steeringWheel = 0;
+	// }
+	// else if(updateErrorCount_steeringWheel < VAR_UPDATE_ERROR_LIM)
+	// {
+	// 	updateErrorCount_steeringWheel++;
+	// }
+	// else
+	// {
+	// 	while(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex));
+	// 	{
+	// 		VariableUpdateRoutine_steeringWheel();
+	// 		IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
+	// 	}
+	// 	updateErrorCount_steeringWheel = 0;
+	// }
 
 	if(IfxCpu_acquireMutex(&DashBoard_public.shared.mutex))	//Do not wait
 	{

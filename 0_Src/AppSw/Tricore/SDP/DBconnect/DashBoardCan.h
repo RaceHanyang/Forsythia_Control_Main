@@ -26,36 +26,49 @@ typedef union
 	uint32 data[2];				//[0-31][32-63]
 	struct 
 	{
-		uint8 AmkState;				//[0-7]
-		boolean SdcAmsOk		:1;	//[8]
-		boolean SdcImdOk		:1;	//[9]
-		boolean SdcBspdOk		:1; //[10]
-		boolean SdcSen			:1;	//[11]
-		boolean tsalOn			:1;	//[12]
-		boolean reserved0		:3;	//[13-15]
-		uint16 startCnt			:16;//[16-31]
-		uint32 reserved2		:32;//[32-63]
+		boolean 		vcu_ok                	:1;  // [0]
+        boolean 		bms_ok                 	:1;  // [1]
+        boolean 		imd_ok                 	:1;  // [2]
+        boolean 		bspd_ok                	:1;  // [3]
+        boolean 		apps_ok                	:1;  // [4]
+        boolean 		bpps_ok                	:1;  // [5]
+        boolean 		sdc_ok                	:1;  // [6]
+        boolean 		rtd_on                 	:1;  // [7]
+        uint8 			reserved_0				:8;  // [8-15]
+        uint16 			start_cnt				:16; // [16-31]
+		uint32 			reserved_1				:32; // [32-63]
 	}B;
-} DashBoardMsg0_t;;
+} DashBoardMsg0_t;
 
 typedef union 
 {
 	uint32 data[2];				//[0-31][32-63]
 	struct 
 	{
-		boolean StartBtn		:1;	//[0]
-		uint16 reserved0		:15;//[1-15]
-		uint16 startCntMirror	:16;//[16-31]
-		uint32 reserved2		:32;//[32-63]
+        boolean 		start_up                :1;  // [0]
+        boolean			bms_ok					:1;	 // [1]
+        boolean 		imd_ok                 	:1;  // [2]
+        boolean 		bspd_ok                	:1;  // [3]
+        boolean 		apps_ok                	:1;  // [4]
+        boolean 		bpps_ok                	:1;  // [5]
+        boolean 		sdc_ok                	:1;  // [6]
+        boolean 		rtd_on                 	:1;  // [7]
+        uint8 			reserved_0				:8;  // [8-15]
+        uint16 			start_cnt_mirror		:16; // [16-31]
+		uint32 			reserved_1				:32; // [32-63]
 	}B;
 } DashBoardMsg1_t;
 
 typedef struct 
 {
+	boolean vcuOk;
 	boolean bmsOk;
 	boolean imdOk;
 	boolean bspdOk;
+	boolean appsOk;
+	boolean bppsOk;
 	boolean sdcSenFinal;
+	boolean rtdOn;
 	boolean brakeOn;
 	boolean tsalOn;
 }DashBoard_info_t;
