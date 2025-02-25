@@ -174,7 +174,8 @@ void Task_init (void)
       SDP_Cooling_init();
       SDP_SteeringAngleAdc_init();
       SDP_DashBoardCan_init();
-//      SDP_Accumulator_init();
+      SDP_Accumulator_init();
+      SDP_MechMsg_init();
    }
    /* Hmm... */
    {
@@ -268,7 +269,7 @@ void Task_10ms_slot1 (void)
 {
    stm_buf = IfxStm_get(&MODULE_STM0);
    SDP_Cooling_run_10ms();
-//   SDP_Accumulator_run_10ms();
+   SDP_Accumulator_run_10ms();
 
    //   HLD_Imu_run_10ms_s1();
 
@@ -325,6 +326,7 @@ void Task_100ms_slot5(void)
 void Task_1000ms (void)
 {
    SDP_Cooling_Switch();
+   SDP_MechMsg_run_1000ms();
    Task_counter_service_1000ms();
 }
 void Task_1000ms_slot3 (void)

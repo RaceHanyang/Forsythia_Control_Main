@@ -44,11 +44,11 @@
 #define V0_CONST_A 		-9.2980636458f
 #define V0_CONST_B		100.7315829998f
 #elif PPSMODE == ADC
-#define A0STT		(1.15f)
-#define A0END		(3.20f)
+#define A0STT		(0.50f)
+#define A0END		(2.50f)
 
-#define A1STT		(0.74f)
-#define A1END		(2.00f)
+#define A1STT		(0.33f)
+#define A1END		(1.65f)
 #endif
 
 #define PBERRORLIMIT	10
@@ -166,8 +166,8 @@ void SDP_PedalBox_init(void)
 		config_adc.adcConfig.lpf.activated = TRUE;
 
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P20_6_G2CH4_AD7;
-		config_adc.tfConfig.a = 100.0f / (A0END - A0STT);
-		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0STT);
+		config_adc.tfConfig.a = 100.0f / (A0STT - A0END);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0END);
 
 		config_adc.isOvervoltageProtected = TRUE;
 
@@ -176,8 +176,8 @@ void SDP_PedalBox_init(void)
 
 		//APPS1
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P23_4_G0CH0_AD11;
-		config_adc.tfConfig.a = 100.0f / (A1END - A1STT);
-		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1STT);
+		config_adc.tfConfig.a = 100.0f / (A1STT - A1END);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1END);
 		AdcSensor_initSensor(&APPS1, &config_adc);
 		HLD_AdcForceStart(APPS1.adcChannel.channel.group);
 		

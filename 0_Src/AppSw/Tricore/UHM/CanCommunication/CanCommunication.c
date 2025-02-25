@@ -159,11 +159,12 @@ void CanCommunication_transmitMessage(CanCommunication_Message *msg)
 		if(count >= canTransmitTimeout)
 		{
 			count = 0;
+			msg->isUpdated = FALSE;
 			break;
 		}
 			
 	}
-	msg->isUpdated = TRUE;
+	if (msg->isUpdated != FALSE)	msg->isUpdated = TRUE;
 }
 
 
@@ -171,4 +172,5 @@ void CanCommunication_setMessageData(uint32 data0, uint32 data1, CanCommunicatio
 {
 	msg->msg.data[0] = data0;
 	msg->msg.data[1] = data1;
+	msg->isUpdated = FALSE;
 }

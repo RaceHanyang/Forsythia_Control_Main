@@ -7,9 +7,13 @@
 #define AMK_TORQUE_POSITIVE_LIM  	2143
 #define AMK_TORQUE_NEGATIVE_LIM  	-2143
 
-#define MOTOR_FL 0
-#define MOTOR_FR 1
-#define MOTOR_RL 2
+#define MAX_AMK_ERROR_RESET			10
+
+#define AMK_RESTART_ERROR			3587
+
+#define MOTOR_FL 1
+#define MOTOR_FR 2
+#define MOTOR_RL 0
 #define MOTOR_RR 3
 
 private_inv_t			inv[4];
@@ -30,7 +34,7 @@ void AmkInverter_writeMessageRear(sint16 torque_left, sint16 torque_right, boole
 static void SetId(id_set_t *id, int node);
 static void setTransmitMessage(uint32 id, CanCommunication_Message *Tm, uint8 node, boolean is_standard_id);
 static void setReceiveMessage(uint32 id, CanCommunication_Message *Rm, uint8 node, boolean is_standard_id);
-static void seqStart(int i);
+static void seqSet(int i);
 static void seqReset(int i);
 static void invWrite(int i, sint16 torque, boolean accelerating);
 static void switchWrite(void);
@@ -48,7 +52,7 @@ void AmkInverter_can_init(void)
 	}
 
 	inv_seq.id 		= 0x010;
-	inv_status.id 	= 0x011;
+	inv_status.id 	= 0x110;
 
 	for(int i = 0; i < 4; i++)
 	{
@@ -59,17 +63,17 @@ void AmkInverter_can_init(void)
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (inv[i].inv_address == 1 || inv[i].inv_address == 2)
-		{
-			setTransmitMessage(inv[i].inv_id.amk_set, &inv[i].t_amk_setpoint_1, 1, TRUE);
-			setReceiveMessage(inv[i].inv_id.amk_ac1, &inv[i].r_amk_actual_values_1, 1, TRUE);
-			setReceiveMessage(inv[i].inv_id.amk_ac2, &inv[i].r_amk_actual_values_2, 1, TRUE);
-		}
-		else if (inv[i].inv_address == 5 || inv[i].inv_address == 6)
+		if (i == MOTOR_FL || i == MOTOR_FR)
 		{
 			setTransmitMessage(inv[i].inv_id.amk_set, &inv[i].t_amk_setpoint_1, 2, TRUE);
 			setReceiveMessage(inv[i].inv_id.amk_ac1, &inv[i].r_amk_actual_values_1, 2, TRUE);
 			setReceiveMessage(inv[i].inv_id.amk_ac2, &inv[i].r_amk_actual_values_2, 2, TRUE);
+		}
+		else if (i == MOTOR_RL || i == MOTOR_RR)
+		{
+			setTransmitMessage(inv[i].inv_id.amk_set, &inv[i].t_amk_setpoint_1, 1, TRUE);
+			setReceiveMessage(inv[i].inv_id.amk_ac1, &inv[i].r_amk_actual_values_1, 1, TRUE);
+			setReceiveMessage(inv[i].inv_id.amk_ac2, &inv[i].r_amk_actual_values_2, 1, TRUE);
 		}
 
 		setTransmitMessage(inv[i].inv_id_log.amk_set, &inv[i].t_amk_setpoint_1_log, 0, FALSE);
@@ -77,8 +81,11 @@ void AmkInverter_can_init(void)
 		setTransmitMessage(inv[i].inv_id_log.amk_ac2, &inv[i].t_amk_actual_values_2_log, 0, FALSE);
 	}
 
-	setTransmitMessage(inv_seq.id, &inv_seq.t_inv_seq, 1, TRUE);
-	setReceiveMessage(inv_status.id, &inv_status.r_inv_status, 1, TRUE);
+	setTransmitMessage(inv_seq.id, &inv_seq.t_inv_seq_node_1, 1, TRUE);
+	setTransmitMessage(inv_seq.id, &inv_seq.t_inv_seq_node_2, 2, TRUE);
+
+	setReceiveMessage(inv_status.id, &inv_status.r_inv_status_node_1, 1, TRUE);
+	setReceiveMessage(inv_status.id, &inv_status.r_inv_status_node_2, 2, TRUE);
 }
 
 void AmkInverter_can_Run(void)
@@ -93,7 +100,7 @@ void AmkInverter_can_Run(void)
 			CanCommunication_setMessageData(inv[i].amk_actual_values_1.RecievedData[0], inv[i].amk_actual_values_1.RecievedData[1], &inv[i].t_amk_actual_values_1_log);
 			CanCommunication_transmitMessage(&inv[i].t_amk_actual_values_1_log);
 		}
-		if (CanCommunication_receiveMessage(&inv[i].r_amk_actual_values_1))
+		if (CanCommunication_receiveMessage(&inv[i].r_amk_actual_values_2))
 		{
 			inv[i].amk_actual_values_2.RecievedData[0] = inv[i].r_amk_actual_values_2.msg.data[0];
 			inv[i].amk_actual_values_2.RecievedData[1] = inv[i].r_amk_actual_values_2.msg.data[1];
@@ -130,10 +137,18 @@ void AmkInverter_can_Run(void)
 		IfxCpu_releaseMutex(&AmkInverterMonitorPublic.mutex);
 	}
 
-	if (CanCommunication_receiveMessage(&inv_status.r_inv_status))
+	if (CanCommunication_receiveMessage(&inv_status.r_inv_status_node_1))
 	{
-		inv_status.inv_status.RecievedData[0] = inv_status.r_inv_status.msg.data[0];
-		inv_status.inv_status.RecievedData[1] = inv_status.r_inv_status.msg.data[1];
+		inv_status.inv_status.RecievedData[0] = inv_status.r_inv_status_node_1.msg.data[0];
+		inv_status.inv_status.RecievedData[1] = inv_status.r_inv_status_node_1.msg.data[1];
+	}
+	else
+	{
+		if (CanCommunication_receiveMessage(&inv_status.r_inv_status_node_2))
+		{
+			inv_status.inv_status.RecievedData[0] = inv_status.r_inv_status_node_2.msg.data[0];
+			inv_status.inv_status.RecievedData[1] = inv_status.r_inv_status_node_2.msg.data[1];
+		}
 	}
 }
 
@@ -143,17 +158,26 @@ void AmkInverter_Start(boolean rtd_flag)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			inv[i].inv_seq_timer++;
-			if (inv[i].inv_seq_timer > 50)
-			{
-				seqReset(i);
-
-				inv[i].inv_seq_timer 	= 0;
-			}
-			else
-			{
-				seqStart(i);
-			}
+//			if (inv[i].inv_on == TRUE)
+//			{
+//				inv[i].inv_seq_timer = 0;
+//			}
+//			else
+//			{
+//				inv[i].inv_seq_timer++;
+//			}
+//
+//			if (inv[i].inv_seq_timer > 50)
+//			{
+//				seqReset(i);
+//
+//				inv[i].inv_seq_timer 	= 0;
+//			}
+//			else
+//			{
+//				seqSet(i);
+//			}
+			seqSet(i);
 		}
 	}
 	else	// rtd_flag == FALSE
@@ -161,50 +185,55 @@ void AmkInverter_Start(boolean rtd_flag)
 		for (int i = 0; i < 4; i++)
 		{
 			seqReset(i);
+
+			inv[i].inv_seq_timer = 0;
+			inv[i].inv_error_reset_cnt = 0;
 		}
 	}
-
 	switchWrite();
 
 	/*Update the state for the public*/
     while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));   //Wait for the mutex
     {
-        for (int i = 0; i < 4; i++)
-		{
-			AmkInverterPublic.r2d |= inv[i].inv_on;
-		}
+//        if ((inv[MOTOR_FL].inv_on == TRUE && inv[MOTOR_FR].inv_on == TRUE) || (inv[MOTOR_RL].inv_on == TRUE && inv[MOTOR_RR].inv_on == TRUE))
+//        	AmkInverterPublic.r2d	=	TRUE;
+    	AmkInverterPublic.r2d	=	(inv[MOTOR_FL].inv_on || inv[MOTOR_FR].inv_on || inv[MOTOR_RL].inv_on || inv[MOTOR_RR].inv_on);
         IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
     }
 }
 
 void AmkInverter_writeMessageFront(sint16 torque_left, sint16 torque_right, boolean accelerating)
 {
-	if ((inv[MOTOR_FL].amk_actual_values_1.S.AMK_bError == TRUE || inv[MOTOR_FR].amk_actual_values_1.S.AMK_bError == TRUE) &&
-		(inv[MOTOR_RL].amk_actual_values_1.S.AMK_bError == FALSE && inv[MOTOR_RR].amk_actual_values_1.S.AMK_bError == FALSE))
-	{
-		invWrite(MOTOR_FL, 0, FALSE);
-		invWrite(MOTOR_FR, 0, FALSE);
-	}
-	else
-	{
-		invWrite(MOTOR_FL, torque_left, accelerating);
-		invWrite(MOTOR_FR, torque_right, accelerating);
-	}
+//	if ((inv[MOTOR_FL].amk_actual_values_1.S.AMK_bError == TRUE || inv[MOTOR_FR].amk_actual_values_1.S.AMK_bError == TRUE) &&
+//		(inv[MOTOR_RL].amk_actual_values_1.S.AMK_bError == FALSE && inv[MOTOR_RR].amk_actual_values_1.S.AMK_bError == FALSE))
+//	{
+//		invWrite(MOTOR_FL, 0, FALSE);
+//		invWrite(MOTOR_FR, 0, FALSE);
+//	}
+//	else
+//	{
+//		invWrite(MOTOR_FL, torque_left, accelerating);
+//		invWrite(MOTOR_FR, torque_right, accelerating);
+//	}
+	invWrite(MOTOR_FL, torque_left, accelerating);
+	invWrite(MOTOR_FR, torque_right, accelerating);
 }
 
 void AmkInverter_writeMessageRear(sint16 torque_left, sint16 torque_right, boolean accelerating)
 {
-	if ((inv[MOTOR_FL].amk_actual_values_1.S.AMK_bError == FALSE && inv[MOTOR_FR].amk_actual_values_1.S.AMK_bError == FALSE) &&
-		(inv[MOTOR_RL].amk_actual_values_1.S.AMK_bError == TRUE || inv[MOTOR_RR].amk_actual_values_1.S.AMK_bError == TRUE))
-	{
-		invWrite(MOTOR_RL, 0, FALSE);
-		invWrite(MOTOR_RR, 0, FALSE);
-	}
-	else
-	{
-		invWrite(MOTOR_RL, torque_left, accelerating);
-		invWrite(MOTOR_RR, torque_right, accelerating);
-	}
+//	if ((inv[MOTOR_FL].amk_actual_values_1.S.AMK_bError == FALSE && inv[MOTOR_FR].amk_actual_values_1.S.AMK_bError == FALSE) &&
+//		(inv[MOTOR_RL].amk_actual_values_1.S.AMK_bError == TRUE || inv[MOTOR_RR].amk_actual_values_1.S.AMK_bError == TRUE))
+//	{
+//		invWrite(MOTOR_RL, 0, FALSE);
+//		invWrite(MOTOR_RR, 0, FALSE);
+//	}
+//	else
+//	{
+//		invWrite(MOTOR_RL, torque_left, accelerating);
+//		invWrite(MOTOR_RR, torque_right, accelerating);
+//	}
+	invWrite(MOTOR_RL, torque_left, accelerating);
+	invWrite(MOTOR_RR, torque_right, accelerating);
 }
 
 static void SetId(id_set_t *id, int node)
@@ -240,251 +269,46 @@ static void setReceiveMessage(uint32 id, CanCommunication_Message *Rm, uint8 nod
 	CanCommunication_initMessage(Rm, &config_message_receive);
 }
 
-static void seqStart(int i)
+static void seqSet(int i)
 {
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= FALSE;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= FALSE;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bError == TRUE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= FALSE;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= FALSE;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bSystemReady == FALSE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= FALSE;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bDcOn == FALSE)	return;
-	if (inv[i].amk_actual_values_1.S.AMK_bQuitDcOn == FALSE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	boolean ef_on = FALSE;
-	if (inv[i].inv_address == 1)		ef_on = inv_status.inv_status.S.inv1_ef_on;
-	else if (inv[i].inv_address == 2)	ef_on = inv_status.inv_status.S.inv2_ef_on;
-	else if (inv[i].inv_address == 5)	ef_on = inv_status.inv_status.S.inv3_ef_on;
-	else if (inv[i].inv_address == 6)	ef_on = inv_status.inv_status.S.inv4_ef_on;
-	if (ef_on == FALSE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
 	boolean be1_on = FALSE;
 	if (inv[i].inv_address == 1)		be1_on = inv_status.inv_status.S.inv1_be1_on;
 	else if (inv[i].inv_address == 2)	be1_on = inv_status.inv_status.S.inv2_be1_on;
 	else if (inv[i].inv_address == 5)	be1_on = inv_status.inv_status.S.inv3_be1_on;
 	else if (inv[i].inv_address == 6)	be1_on = inv_status.inv_status.S.inv4_be1_on;
-	if (be1_on == FALSE)	return;
 
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= be1_on;
-	inv[i].inv_switch.inverter_on 			= be1_on;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bInverterOn == FALSE)	return;
-	if (inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn == FALSE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= be1_on;
-	inv[i].inv_switch.inverter_on 			= be1_on;
-	inv[i].inv_switch.be2_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
 	boolean be2_on = FALSE;
 	if (inv[i].inv_address == 1)		be2_on = inv_status.inv_status.S.inv1_be2_on;
 	else if (inv[i].inv_address == 2)	be2_on = inv_status.inv_status.S.inv2_be2_on;
 	else if (inv[i].inv_address == 5)	be2_on = inv_status.inv_status.S.inv3_be2_on;
 	else if (inv[i].inv_address == 6)	be2_on = inv_status.inv_status.S.inv4_be2_on;
-	if (be2_on == FALSE)	return;
 
 	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
 	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 	inv[i].inv_switch.torque_limit_negativ 	= 0;
 	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
+	inv[i].inv_switch.be1_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
 	inv[i].inv_switch.enable 				= be1_on;
 	inv[i].inv_switch.inverter_on 			= be1_on;
 	inv[i].inv_switch.be2_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 	inv[i].inv_switch.target_velocity 		= 0;
 	inv[i].inv_on 							= be2_on;
+
+	if (inv[i].amk_actual_values_2.S.AMK_ErrorInfo == AMK_RESTART_ERROR)	inv[i].inv_error_reset_cnt	=	0;
+
+	if (inv[i].amk_actual_values_1.S.AMK_bError == TRUE)			return;
+	if (inv[i].amk_actual_values_1.S.AMK_bSystemReady == FALSE)		return;
+	if (inv[i].amk_actual_values_1.S.AMK_bDcOn == FALSE)			return;
+	if (inv[i].amk_actual_values_1.S.AMK_bQuitDcOn == FALSE)		return;
+	if (be1_on == FALSE)											return;
+	if (inv[i].amk_actual_values_1.S.AMK_bInverterOn == FALSE)		return;
+	if (inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn == FALSE)	return;
+	if (be2_on == FALSE)											return;
 	
 }
 
 static void seqReset(int i)
 {
-	boolean ef_on 	= TRUE;
-	boolean be1_on 	= TRUE;
-	boolean be2_on 	= TRUE;
-	if (inv[i].inv_address == 1)
-	{
-		ef_on 	= inv_status.inv_status.S.inv1_ef_on;
-		be1_on 	= inv_status.inv_status.S.inv1_be1_on;
-		be2_on 	= inv_status.inv_status.S.inv1_be2_on;
-	}
-	else if (inv[i].inv_address == 2)
-	{
-		ef_on 	= inv_status.inv_status.S.inv2_ef_on;
-		be1_on 	= inv_status.inv_status.S.inv2_be1_on;
-		be2_on 	= inv_status.inv_status.S.inv2_be2_on;
-	}
-	else if (inv[i].inv_address == 5)
-	{
-		ef_on 	= inv_status.inv_status.S.inv3_ef_on;
-		be1_on 	= inv_status.inv_status.S.inv3_be1_on;
-		be2_on 	= inv_status.inv_status.S.inv3_be2_on;
-	}
-	else if (inv[i].inv_address == 6)
-	{
-		ef_on 	= inv_status.inv_status.S.inv4_ef_on;
-		be1_on 	= inv_status.inv_status.S.inv4_be1_on;
-		be2_on 	= inv_status.inv_status.S.inv4_be2_on;
-	}
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= be1_on;
-	inv[i].inv_switch.inverter_on 			= be1_on;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].inv_address == 1)		be2_on = inv_status.inv_status.S.inv1_be2_on;
-	else if (inv[i].inv_address == 2)	be2_on = inv_status.inv_status.S.inv2_be2_on;
-	else if (inv[i].inv_address == 5)	be2_on = inv_status.inv_status.S.inv3_be2_on;
-	else if (inv[i].inv_address == 6)	be2_on = inv_status.inv_status.S.inv4_be2_on;
-	if (be2_on == TRUE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= be1_on;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bInverterOn == TRUE)	return;
-	
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= ef_on;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn == TRUE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].inv_address == 1)		be1_on = inv_status.inv_status.S.inv1_be1_on;
-	else if (inv[i].inv_address == 2)	be1_on = inv_status.inv_status.S.inv2_be1_on;
-	else if (inv[i].inv_address == 5)	be1_on = inv_status.inv_status.S.inv3_be1_on;
-	else if (inv[i].inv_address == 6)	be1_on = inv_status.inv_status.S.inv4_be1_on;
-	if (be1_on == TRUE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= FALSE;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].inv_address == 1)		ef_on = inv_status.inv_status.S.inv1_ef_on;
-	else if (inv[i].inv_address == 2)	ef_on = inv_status.inv_status.S.inv2_ef_on;
-	else if (inv[i].inv_address == 5)	ef_on = inv_status.inv_status.S.inv3_ef_on;
-	else if (inv[i].inv_address == 6)	ef_on = inv_status.inv_status.S.inv4_ef_on;
-	if (ef_on == TRUE)	return;
-
-	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
-	inv[i].inv_switch.dc_on 				= FALSE;
-	inv[i].inv_switch.torque_limit_negativ 	= 0;
-	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.ef_on 				= FALSE;
-	inv[i].inv_switch.be1_on 				= FALSE;
-	inv[i].inv_switch.enable 				= FALSE;
-	inv[i].inv_switch.inverter_on 			= FALSE;
-	inv[i].inv_switch.be2_on 				= FALSE;
-	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= FALSE;
-	if (inv[i].amk_actual_values_1.S.AMK_bDcOn == TRUE)	return;
-	if (inv[i].amk_actual_values_1.S.AMK_bQuitDcOn == TRUE)	return;
-
 	inv[i].inv_switch.error_reset			= FALSE;
 	inv[i].inv_switch.dc_on 				= FALSE;
 	inv[i].inv_switch.torque_limit_negativ 	= 0;
@@ -543,13 +367,18 @@ static void invWrite(int i, sint16 torque, boolean accelerating)
 	inv[i].amk_setpoint_1.S.AMK_bInverterOn 		= inv[i].inv_switch.inverter_on;
 	inv[i].amk_setpoint_1.S.AMK_bDcOn 				= inv[i].inv_switch.dc_on;
 	inv[i].amk_setpoint_1.S.AMK_bEnable 			= inv[i].inv_switch.enable;
-	inv[i].amk_setpoint_1.S.AMK_bErrorReset 		= inv[i].inv_switch.error_reset;
+	if (inv[i].inv_error_reset_cnt < MAX_AMK_ERROR_RESET)
+		inv[i].amk_setpoint_1.S.AMK_bErrorReset		= inv[i].inv_switch.error_reset;
+	else
+		inv[i].amk_setpoint_1.S.AMK_bErrorReset		= FALSE;
 	inv[i].amk_setpoint_1.S.AMK_TargetVelocity 		= inv[i].inv_switch.target_velocity;
 	inv[i].amk_setpoint_1.S.AMK_TorqueLimitPositv 	= inv[i].inv_switch.torque_limit_positv;
 	inv[i].amk_setpoint_1.S.AMK_TorqueLimitNegativ 	= inv[i].inv_switch.torque_limit_negativ;
 
 	CanCommunication_setMessageData(inv[i].amk_setpoint_1.TransmitData[0], inv[i].amk_setpoint_1.TransmitData[1], &inv[i].t_amk_setpoint_1);
 	CanCommunication_transmitMessage(&inv[i].t_amk_setpoint_1);
+
+	if (inv[i].inv_switch.error_reset == TRUE && inv[i].inv_error_reset_cnt < MAX_AMK_ERROR_RESET)	inv[i].inv_error_reset_cnt++;
 
 	CanCommunication_setMessageData(inv[i].amk_setpoint_1.TransmitData[0], inv[i].amk_setpoint_1.TransmitData[1], &inv[i].t_amk_setpoint_1_log);
 	CanCommunication_transmitMessage(&inv[i].t_amk_setpoint_1_log);
@@ -565,7 +394,7 @@ static void switchWrite(void)
 			inv_seq.inv_seq.S.inv1_warn 			= inv[i].amk_actual_values_1.S.AMK_bWarn;
 			inv_seq.inv_seq.S.inv1_system_ready 	= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 			inv_seq.inv_seq.S.inv1_quit_dc_on 		= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-			inv_seq.inv_seq.S.inv1_ef_on 			= inv[i].inv_switch.ef_on;
+			inv_seq.inv_seq.S.inv2_ef_on 			= inv[i].inv_switch.ef_on;
 			inv_seq.inv_seq.S.inv1_be1_on 			= inv[i].inv_switch.be1_on;
 			inv_seq.inv_seq.S.inv1_quit_inverter_on = inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 			inv_seq.inv_seq.S.inv1_be2_on 			= inv[i].inv_switch.be2_on;
@@ -576,7 +405,7 @@ static void switchWrite(void)
 			inv_seq.inv_seq.S.inv2_warn 			= inv[i].amk_actual_values_1.S.AMK_bWarn;
 			inv_seq.inv_seq.S.inv2_system_ready 	= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 			inv_seq.inv_seq.S.inv2_quit_dc_on 		= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-			inv_seq.inv_seq.S.inv2_ef_on 			= inv[i].inv_switch.ef_on;
+			inv_seq.inv_seq.S.inv1_ef_on 			= inv[i].inv_switch.ef_on;
 			inv_seq.inv_seq.S.inv2_be1_on 			= inv[i].inv_switch.be1_on;
 			inv_seq.inv_seq.S.inv2_quit_inverter_on = inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 			inv_seq.inv_seq.S.inv2_be2_on 			= inv[i].inv_switch.be2_on;
@@ -587,7 +416,7 @@ static void switchWrite(void)
 			inv_seq.inv_seq.S.inv3_warn 			= inv[i].amk_actual_values_1.S.AMK_bWarn;
 			inv_seq.inv_seq.S.inv3_system_ready 	= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 			inv_seq.inv_seq.S.inv3_quit_dc_on 		= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-			inv_seq.inv_seq.S.inv3_ef_on 			= inv[i].inv_switch.ef_on;
+			inv_seq.inv_seq.S.inv1_ef_on 			= inv[i].inv_switch.ef_on;
 			inv_seq.inv_seq.S.inv3_be1_on 			= inv[i].inv_switch.be1_on;
 			inv_seq.inv_seq.S.inv3_quit_inverter_on = inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 			inv_seq.inv_seq.S.inv3_be2_on 			= inv[i].inv_switch.be2_on;
@@ -598,15 +427,23 @@ static void switchWrite(void)
 			inv_seq.inv_seq.S.inv4_warn 			= inv[i].amk_actual_values_1.S.AMK_bWarn;
 			inv_seq.inv_seq.S.inv4_system_ready 	= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 			inv_seq.inv_seq.S.inv4_quit_dc_on 		= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-			inv_seq.inv_seq.S.inv4_ef_on 			= inv[i].inv_switch.ef_on;
+			inv_seq.inv_seq.S.inv2_ef_on 			= inv[i].inv_switch.ef_on;
 			inv_seq.inv_seq.S.inv4_be1_on 			= inv[i].inv_switch.be1_on;
 			inv_seq.inv_seq.S.inv4_quit_inverter_on = inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 			inv_seq.inv_seq.S.inv4_be2_on 			= inv[i].inv_switch.be2_on;
 		}
 	}
 
-	CanCommunication_setMessageData(inv_seq.inv_seq.TransmitData[0], inv_seq.inv_seq.TransmitData[1], &inv_seq.t_inv_seq);
-	CanCommunication_transmitMessage(&inv_seq.t_inv_seq);
+	if (inv[MOTOR_FL].inv_on == FALSE || inv[MOTOR_FR].inv_on == FALSE || inv[MOTOR_RL].inv_on == FALSE || inv[MOTOR_RR].inv_on == FALSE)
+	{
+		CanCommunication_setMessageData(inv_seq.inv_seq.TransmitData[0], inv_seq.inv_seq.TransmitData[1], &inv_seq.t_inv_seq_node_1);
+		CanCommunication_transmitMessage(&inv_seq.t_inv_seq_node_1);
+		if (inv_seq.t_inv_seq_node_1.isUpdated == FALSE)
+		{
+			CanCommunication_setMessageData(inv_seq.inv_seq.TransmitData[0], inv_seq.inv_seq.TransmitData[1], &inv_seq.t_inv_seq_node_2);
+			CanCommunication_transmitMessage(&inv_seq.t_inv_seq_node_2);
+		}
+	}
 }
 #else
 const float Inverter_peak_current = 107.2;

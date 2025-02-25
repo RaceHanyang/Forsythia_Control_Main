@@ -25,6 +25,7 @@ void SDP_Accumulator_init(void) {
         config.frameType		=	IfxMultican_Frame_receive;
         config.dataLen			=	IfxMultican_DataLengthCode_8;
         config.node				=	&CanCommunication_canNode0;
+        config.isStandardId		=	FALSE;
         CanCommunication_initMessage(&Accumulator.msgBatteryDiagnose, &config);
 	}
 	{
@@ -33,6 +34,7 @@ void SDP_Accumulator_init(void) {
         config.frameType		=	IfxMultican_Frame_receive;
         config.dataLen			=	IfxMultican_DataLengthCode_8;
         config.node				=	&CanCommunication_canNode0;
+        config.isStandardId		=	FALSE;
         CanCommunication_initMessage(&Accumulator.msgFanStatusData, &config);
 	}/*
 	{
@@ -49,6 +51,7 @@ void SDP_Accumulator_init(void) {
         config.frameType		=	IfxMultican_Frame_receive;
         config.dataLen			=	IfxMultican_DataLengthCode_8;
         config.node				=	&CanCommunication_canNode0;
+        config.isStandardId		=	FALSE;
         CanCommunication_initMessage(&Accumulator.msgFanTargetDuty, &config);
 	}
 	{
@@ -57,6 +60,7 @@ void SDP_Accumulator_init(void) {
         config.frameType		=	IfxMultican_Frame_transmit;
         config.dataLen			=	IfxMultican_DataLengthCode_8;
         config.node				=	&CanCommunication_canNode0;
+        config.isStandardId		=	FALSE;
         CanCommunication_initMessage(&Accumulator.msgTC_order, &config);
 	}
 }
@@ -79,7 +83,7 @@ void SDP_Accumulator_run_10ms(void)
     	Accumulator.FanTargetDuty.ReceivedData[0] = Accumulator.msgFanTargetDuty.msg.data[0];
     }
 
-    CanCommunication_transmitMessage(&Accumulator.msgTC_order);
+//    CanCommunication_transmitMessage(&Accumulator.msgTC_order);
 }
 
 void SDP_Accumulator_setVCUmode(void) {

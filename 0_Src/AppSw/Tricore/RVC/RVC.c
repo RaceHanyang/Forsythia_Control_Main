@@ -43,6 +43,7 @@ TODO:
 
 #include "AmkInverter_can.h"
 #include "DashBoardCan.h"
+#include "MechMsg.h"
 
 /**************************** Macro **********************************/
 #define PWMFREQ 5000 // PWM frequency in Hz
@@ -932,6 +933,12 @@ volatile uint32 updateErrorCount_dashboard = 0;
 
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
+	mech_msg.steering_and_pedal.s.steering_angel 	= 0;
+	mech_msg.steering_and_pedal.s.apps				=	(uint8)SDP_PedalBox.apps.pps;
+	mech_msg.steering_and_pedal.s.bpps				=	(uint8)SDP_PedalBox.bpps.pps;
+	mech_msg.steering_and_pedal.s.brake_pressure_0	=	(uint16)RVC.BrakePressure1.value * 10;
+	mech_msg.steering_and_pedal.s.brake_pressure_1	=	(uint16)RVC.BrakePressure2.value * 10;
+
 	if(IfxCpu_acquireMutex(&DashBoard_public.shared.mutex))	//Do not wait
 	{
 		VariableUpdateRoutine_dashboard();

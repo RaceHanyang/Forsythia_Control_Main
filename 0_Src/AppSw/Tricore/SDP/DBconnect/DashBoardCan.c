@@ -57,7 +57,7 @@ void SDP_DashBoardCan_init(void)
 		CanCommunication_Message_Config config;
 		config.messageId = DshBrdMsg0;
 		config.frameType = IfxMultican_Frame_transmit;
-		config.dataLen = IfxMultican_DataLengthCode_4;
+		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&DashBoard_msgObj0, &config);
@@ -66,7 +66,7 @@ void SDP_DashBoardCan_init(void)
 		CanCommunication_Message_Config config;
 		config.messageId = DshBrdMsg1;
 		config.frameType = IfxMultican_Frame_receive;
-		config.dataLen = IfxMultican_DataLengthCode_4;
+		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&DashBoard_msgObj1, &config);

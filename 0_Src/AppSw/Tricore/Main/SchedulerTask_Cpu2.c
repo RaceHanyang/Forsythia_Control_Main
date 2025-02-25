@@ -115,10 +115,13 @@ void Task_core2_1ms(void)
 	// AmkInverter_writeMessage(value,value);
 	// AmkInverter_writeMessage2(value,value);
 
-
-	AmkInverter_writeMessageFront(torque_fl, torque_fr, accelerating);
-	AmkInverter_writeMessageRear(torque_rl, torque_rr, accelerating);
 	
+	if(task2_10ms_counter == 10)
+	{
+		AmkInverter_writeMessageFront(torque_fl, torque_fr, accelerating);
+		AmkInverter_writeMessageRear(torque_rl, torque_rr, accelerating);
+	}
+
 	// else if (task2_10ms_counter ==15)
 	// SDP_DashBoardCan_run_10ms();
 

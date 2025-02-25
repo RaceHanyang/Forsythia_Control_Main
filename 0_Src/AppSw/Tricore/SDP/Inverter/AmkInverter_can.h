@@ -167,6 +167,7 @@ typedef struct
 	amk_actual_values_2_t 		amk_actual_values_2;
 	inv_switch_t 				inv_switch;
 	uint32 						inv_seq_timer;
+	uint32						inv_error_reset_cnt;
 
 	CanCommunication_Message 	t_amk_setpoint_1;
 	CanCommunication_Message 	r_amk_actual_values_1;
@@ -184,7 +185,8 @@ typedef struct
 	uint32 						id;
 	inv_seq_t					inv_seq;
 
-	CanCommunication_Message 	t_inv_seq;
+	CanCommunication_Message 	t_inv_seq_node_1;
+	CanCommunication_Message 	t_inv_seq_node_2;
 } private_inv_seq_t;
 
 typedef struct 
@@ -192,7 +194,8 @@ typedef struct
 	uint32 						id;
 	inv_status_t				inv_status;
 
-	CanCommunication_Message 	r_inv_status;
+	CanCommunication_Message 	r_inv_status_node_1;
+	CanCommunication_Message 	r_inv_status_node_2;
 } private_inv_status_t;
 
 typedef struct 
