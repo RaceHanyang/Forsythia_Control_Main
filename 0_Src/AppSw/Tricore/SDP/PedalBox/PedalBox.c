@@ -44,11 +44,14 @@
 #define V0_CONST_A 		-9.2980636458f
 #define V0_CONST_B		100.7315829998f
 #elif PPSMODE == ADC
-#define A0STT		(0.50f)
-#define A0END		(2.50f)
+#define A0STT		(0.50f) // min = 0.5
+#define A0END		(2.50f) // max = 4.5
 
-#define A1STT		(0.33f)
-#define A1END		(1.65f)
+#define A1STT		(0.33f) // min = 0.33
+#define A1END		(1.65f) // max = 2.97
+
+#define BSTT		(0.50f)
+#define BEND		(1.62f)
 #endif
 
 #define PBERRORLIMIT	10
@@ -166,6 +169,8 @@ void SDP_PedalBox_init(void)
 		config_adc.adcConfig.lpf.activated = TRUE;
 
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P20_6_G2CH4_AD7;
+//		config_adc.tfConfig.a = 100.0f / (A0END - A0STT);
+//		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0STT);
 		config_adc.tfConfig.a = 100.0f / (A0STT - A0END);
 		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0END);
 
@@ -176,6 +181,8 @@ void SDP_PedalBox_init(void)
 
 		//APPS1
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P23_4_G0CH0_AD11;
+//		config_adc.tfConfig.a = 100.0f / (A1END - A1STT);
+//		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1STT);
 		config_adc.tfConfig.a = 100.0f / (A1STT - A1END);
 		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1END);
 		AdcSensor_initSensor(&APPS1, &config_adc);
@@ -188,8 +195,8 @@ void SDP_PedalBox_init(void)
 		config_adc.adcConfig.lpf.config.samplingTime = 10.0e-3;
 		config_adc.isOvervoltageProtected = FALSE;
 		config_adc.linCalConfig.isAct = FALSE;
-		config_adc.tfConfig.a = 22.5;
-		config_adc.tfConfig.b = -6.25;
+		config_adc.tfConfig.a = 100.0f / (BEND - BSTT);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-BSTT);
 		
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P23_2_G4CH4_AD3;
 
@@ -354,6 +361,15 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 	{
 		data1 -> isValueOk = TRUE;
 		data2 -> isValueOk = TRUE;
+	}
+
+	if (data1->pedalPercent < 0 || data1->pedalPercent > 100)
+	{
+		data1 -> isValueOk = FALSE;
+	}
+	if (data2->pedalPercent < 0 || data2->pedalPercent > 100)
+	{
+		data2 -> isValueOk = FALSE;
 	}
 }
 

@@ -84,7 +84,6 @@ void Task_core2_1ms(void)
 	delay_1ms_c2 = (IfxStm_get(&MODULE_STM0) - stm_buf_c2_delay) * 1000000 / (IfxStm_getFrequency(&MODULE_STM0));
 	stm_buf_c2 = IfxStm_get(&MODULE_STM0);
 
-	SDP_PedalBox_run_1ms();
 //	SDP_SteeringAngleAdc_run();
 
 	AmkInverter_can_Run();

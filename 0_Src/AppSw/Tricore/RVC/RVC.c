@@ -315,6 +315,7 @@ IFX_STATIC void RVC_initAdcSensor(void)
 	adcConfig.adcConfig.channelIn = &(HLD_Vadc_Channel_In){HLD_Vadc_group0, HLD_Vadc_ChannelId_2};
 	AdcSensor_initSensor(&RVC.BrakePressure2, &adcConfig);
 	HLD_AdcForceStart(RVC.BrakePressure1.adcChannel.channel.group);
+	HLD_AdcForceStart(RVC.BrakePressure2.adcChannel.channel.group);
 
 	/* Steering Angle Analog (Backup function) */
 	//TODO
