@@ -241,6 +241,7 @@ void Task_IsrCb_1ms (void)
 
       // SDP_WheelSpeed_run_1ms();
       SDP_PedalBox_run_1ms();
+      SDP_SteeringAngleAdc_run();
       // SDP_ShockValue_run_1ms();
 
    }
