@@ -168,11 +168,11 @@ void Task_init (void)
    /*SDP initialization*/
    {
       SDP_PedalBox_init();
-      SDP_SteeringAngle_init();
+      // SDP_SteeringAngle_init();
       SDP_ShockValue_init();
       // SDP_ShockValue_log_init();
       SDP_Cooling_init();
-      SDP_SteeringAngleAdc_init();
+      // SDP_SteeringAngleAdc_init();
       SDP_DashBoardCan_init();
       SDP_Accumulator_init();
       SDP_MechMsg_init();
@@ -241,7 +241,7 @@ void Task_IsrCb_1ms (void)
 
       // SDP_WheelSpeed_run_1ms();
       SDP_PedalBox_run_1ms();
-      SDP_SteeringAngleAdc_run();
+      // SDP_SteeringAngleAdc_run();
       // SDP_ShockValue_run_1ms();
 
    }

@@ -97,7 +97,7 @@ void SDP_SteeringAngleAdc_run(){
     SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_angle.sta0,&STA0);
 	SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_angle.sta1,&STA1);
 
-	SDP_SteeringAngleAdc_checkErrorState_fromTwo(&SDP_SteeringAngleAdc_angle.sta0, &SDP_SteeringAngleAdc_angle.sta1);
+	SDP_SteeringAngleAdc_checkErrorState_fromTwo(&SDP_SteeringAngleAdc_angle. , &SDP_SteeringAngleAdc_angle.sta1);
 
 	if (SDP_SteeringAngleAdc_angle.sta0.isValueOk)
 	{
