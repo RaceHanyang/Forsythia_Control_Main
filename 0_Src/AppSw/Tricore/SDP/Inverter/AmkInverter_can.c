@@ -190,7 +190,7 @@ void AmkInverter_Start(boolean rtd_flag)
 			inv[i].inv_error_reset_cnt = 0;
 		}
 	}
-	switchWrite();
+//	switchWrite();
 
 	/*Update the state for the public*/
     while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));   //Wait for the mutex
@@ -271,28 +271,31 @@ static void setReceiveMessage(uint32 id, CanCommunication_Message *Rm, uint8 nod
 
 static void seqSet(int i)
 {
-	boolean be1_on = FALSE;
-	if (inv[i].inv_address == 1)		be1_on = inv_status.inv_status.S.inv1_be1_on;
-	else if (inv[i].inv_address == 2)	be1_on = inv_status.inv_status.S.inv2_be1_on;
-	else if (inv[i].inv_address == 5)	be1_on = inv_status.inv_status.S.inv3_be1_on;
-	else if (inv[i].inv_address == 6)	be1_on = inv_status.inv_status.S.inv4_be1_on;
-
-	boolean be2_on = FALSE;
-	if (inv[i].inv_address == 1)		be2_on = inv_status.inv_status.S.inv1_be2_on;
-	else if (inv[i].inv_address == 2)	be2_on = inv_status.inv_status.S.inv2_be2_on;
-	else if (inv[i].inv_address == 5)	be2_on = inv_status.inv_status.S.inv3_be2_on;
-	else if (inv[i].inv_address == 6)	be2_on = inv_status.inv_status.S.inv4_be2_on;
+//	boolean be1_on = FALSE;
+//	if (inv[i].inv_address == 1)		be1_on = inv_status.inv_status.S.inv1_be1_on;
+//	else if (inv[i].inv_address == 2)	be1_on = inv_status.inv_status.S.inv2_be1_on;
+//	else if (inv[i].inv_address == 5)	be1_on = inv_status.inv_status.S.inv3_be1_on;
+//	else if (inv[i].inv_address == 6)	be1_on = inv_status.inv_status.S.inv4_be1_on;
+//
+//	boolean be2_on = FALSE;
+//	if (inv[i].inv_address == 1)		be2_on = inv_status.inv_status.S.inv1_be2_on;
+//	else if (inv[i].inv_address == 2)	be2_on = inv_status.inv_status.S.inv2_be2_on;
+//	else if (inv[i].inv_address == 5)	be2_on = inv_status.inv_status.S.inv3_be2_on;
+//	else if (inv[i].inv_address == 6)	be2_on = inv_status.inv_status.S.inv4_be2_on;
 
 	inv[i].inv_switch.error_reset			= inv[i].amk_actual_values_1.S.AMK_bError;
 	inv[i].inv_switch.dc_on 				= inv[i].amk_actual_values_1.S.AMK_bSystemReady;
 	inv[i].inv_switch.torque_limit_negativ 	= 0;
 	inv[i].inv_switch.torque_limit_positv 	= 0;
-	inv[i].inv_switch.be1_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
-	inv[i].inv_switch.enable 				= be1_on;
-	inv[i].inv_switch.inverter_on 			= be1_on;
-	inv[i].inv_switch.be2_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
+//	inv[i].inv_switch.be1_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
+//	inv[i].inv_switch.enable 				= be1_on;
+//	inv[i].inv_switch.inverter_on 			= be1_on;
+	inv[i].inv_switch.enable 				= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
+	inv[i].inv_switch.inverter_on 			= inv[i].amk_actual_values_1.S.AMK_bQuitDcOn;
+//	inv[i].inv_switch.be2_on 				= inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 	inv[i].inv_switch.target_velocity 		= 0;
-	inv[i].inv_on 							= be2_on;
+//	inv[i].inv_on 							= be2_on;
+	inv[i].inv_on 							= inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn;
 
 	if (inv[i].amk_actual_values_2.S.AMK_ErrorInfo == AMK_RESTART_ERROR)	inv[i].inv_error_reset_cnt	=	0;
 
@@ -300,10 +303,10 @@ static void seqSet(int i)
 	if (inv[i].amk_actual_values_1.S.AMK_bSystemReady == FALSE)		return;
 	if (inv[i].amk_actual_values_1.S.AMK_bDcOn == FALSE)			return;
 	if (inv[i].amk_actual_values_1.S.AMK_bQuitDcOn == FALSE)		return;
-	if (be1_on == FALSE)											return;
+//	if (be1_on == FALSE)											return;
 	if (inv[i].amk_actual_values_1.S.AMK_bInverterOn == FALSE)		return;
 	if (inv[i].amk_actual_values_1.S.AMK_bQuitInverterOn == FALSE)	return;
-	if (be2_on == FALSE)											return;
+//	if (be2_on == FALSE)											return;
 	
 }
 

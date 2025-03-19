@@ -117,6 +117,8 @@ void Task_core2_1ms(void)
 	
 	if(task2_10ms_counter == 10)
 	{
+		CanCommunication_reInit();
+
 		AmkInverter_writeMessageFront(torque_fl, torque_fr, accelerating);
 		AmkInverter_writeMessageRear(torque_rl, torque_rr, accelerating);
 	}

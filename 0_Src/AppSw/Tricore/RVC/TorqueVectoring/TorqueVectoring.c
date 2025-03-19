@@ -35,8 +35,8 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 //	float32 fd = 2 * RVC.torque.frontDist;
 //	RVC.torque.frontLeft = fd * RVC.torque.controlled;
 //	RVC.torque.frontRight = fd * RVC.torque.controlled;
-	RVC.torque.frontLeft = RVC.torque.controlled;
-	RVC.torque.frontRight = RVC.torque.controlled;
+	RVC.torque.frontLeft = 0.4 * RVC.torque.controlled;
+	RVC.torque.frontRight = 0.4 * RVC.torque.controlled;
 	RVC.torque.rearLeft = RVC.torque.controlled;
 	RVC.torque.rearRight = RVC.torque.controlled;
 }

@@ -44,13 +44,13 @@
 #define V0_CONST_A 		-9.2980636458f
 #define V0_CONST_B		100.7315829998f
 #elif PPSMODE == ADC
-#define ASTROKE		(40.0f)
+#define ASTROKE		(100.0f)
 
-#define A0STT		(0.50f) // min = 0.5
-#define A0END		(2.50f) // max = 4.5
+#define A0STT		(1.74f) // min = 0.5
+#define A0END		(3.81f) // max = 4.5
 
-#define A1STT		(0.33f) // min = 0.33
-#define A1END		(1.65f) // max = 2.97
+#define A1STT		(1.18f) // min = 0.33
+#define A1END		(2.53f) // max = 2.97
 
 #define BSTROKE		(100.0f)
 
@@ -356,7 +356,7 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 	float32 diff = (data1->pedalPercent) - (data2->pedalPercent);
 	float32 absDiff = fabs(diff);
 
-	if (absDiff>ERRLIM)
+	if (absDiff>20)//ERRLIM)
 	{
 		data1 -> isValueOk = FALSE;
 		data2 -> isValueOk = FALSE;
