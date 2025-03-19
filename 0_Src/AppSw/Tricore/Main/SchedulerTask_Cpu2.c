@@ -106,10 +106,10 @@ void Task_core2_1ms(void)
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
 
-	torque_fl = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFl);
-	torque_fr = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFr);
-	torque_rl = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRl);
-	torque_rr = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRr);
+	torque_fl += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFl);
+	torque_fr += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFr);
+	torque_rl += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRl);
+	torque_rr += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRr);
 
 	// AmkInverter_writeMessage(value,value);
 	// AmkInverter_writeMessage2(value,value);
@@ -117,8 +117,18 @@ void Task_core2_1ms(void)
 	
 	if(task2_10ms_counter == 10)
 	{
+		torque_fl /= 11;
+		torque_fr /= 11;
+		torque_rl /= 11;
+		torque_rr /= 11;
+
 		AmkInverter_writeMessageFront(torque_fl, torque_fr, accelerating);
 		AmkInverter_writeMessageRear(torque_rl, torque_rr, accelerating);
+
+		torque_fl = 0;
+		torque_fr = 0;
+		torque_rl = 0;
+		torque_rr = 0;
 	}
 
 	// else if (task2_10ms_counter ==15)
