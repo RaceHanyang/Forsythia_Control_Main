@@ -104,7 +104,7 @@ typedef struct
 /******************************************************************************/
 /*------------------------------Global variables------------------------------*/
 /******************************************************************************/
-float32				SDP_PedalBox_errorLimit = PBERRORLIMIT;
+float32 SDP_PedalBox_errorLimit = PBERRORLIMIT;
 
 SDP_PedalBox_pps_t	SDP_PedalBox_pps;
 SDP_PedalBox_t		SDP_PedalBox;
@@ -356,7 +356,7 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 	float32 diff = (data1->pedalPercent) - (data2->pedalPercent);
 	float32 absDiff = fabs(diff);
 
-	if (absDiff>20)//ERRLIM)
+	if (absDiff>50)//ERRLIM)
 	{
 		data1 -> isValueOk = FALSE;
 		data2 -> isValueOk = FALSE;

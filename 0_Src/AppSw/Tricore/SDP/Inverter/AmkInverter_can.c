@@ -327,7 +327,6 @@ static void seqReset(int i)
 
 static void invWrite(int i, sint16 torque, boolean accelerating)
 {
-	if (inv[i].r_amk_actual_values_1.isUpdated == FALSE)	CanCommunication_reInit();
 	// if (inv[i].inv_on == TRUE)
 	// {
 	// 	if (torque > 0)
