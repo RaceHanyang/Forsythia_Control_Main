@@ -117,8 +117,6 @@ void Task_core2_1ms(void)
 	
 	if(task2_10ms_counter == 10)
 	{
-		CanCommunication_reInit();
-
 		torque_fl /= 11;
 		torque_fr /= 11;
 		torque_rl /= 11;

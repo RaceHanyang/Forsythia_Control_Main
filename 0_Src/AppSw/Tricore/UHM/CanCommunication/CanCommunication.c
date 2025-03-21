@@ -21,6 +21,8 @@ IfxMultican_Can_Node	CanCommunication_canNode0;
 IfxMultican_Can_Node	CanCommunication_canNode1;
 IfxMultican_Can_Node	CanCommunication_canNode2;
 
+
+
 // CanCommunication_Message CanCommunication_message0;
 
 /* Private Variables */
@@ -37,45 +39,6 @@ void CanCommunication_init(void)
 	IfxMultican_Can_initModule(&CanCommunication_canModule, &canConfig);
 
 
-	/* Can node0 initialization */
-	IfxMultican_Can_NodeConfig canNodeConfig;
-	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
-
-	canNodeConfig.baudrate 	= 1000000;		//1Mbps
-	canNodeConfig.nodeId	= IfxMultican_NodeId_0;
-	canNodeConfig.rxPin		= &CAN0NODE0IN;
-	canNodeConfig.rxPinMode	= IfxPort_InputMode_pullUp;
-	canNodeConfig.txPin		= &CAN0NODE0OUT;
-	canNodeConfig.txPinMode	= IfxPort_OutputMode_pushPull;
-	IfxMultican_Can_Node_init(&CanCommunication_canNode0, &canNodeConfig);
-
-	/* Can node1 initialization */
-	// IfxMultican_Can_NodeConfig canNodeConfig;
-	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
-
-	canNodeConfig.baudrate 	= 500000;		//500kbps
-	canNodeConfig.nodeId	= IfxMultican_NodeId_1;
-	canNodeConfig.rxPin		= &CAN0NODE1IN;
-	canNodeConfig.rxPinMode	= IfxPort_InputMode_pullUp;
-	canNodeConfig.txPin		= &CAN0NODE1OUT;
-	canNodeConfig.txPinMode	= IfxPort_OutputMode_pushPull;
-	IfxMultican_Can_Node_init(&CanCommunication_canNode1, &canNodeConfig);
-
-	/* Can node2 initialization */
-	// IfxMultican_Can_NodeConfig canNodeConfig;
-	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
-
-	canNodeConfig.baudrate 	= 500000;		//500kbps
-	canNodeConfig.nodeId	= IfxMultican_NodeId_2;
-	canNodeConfig.rxPin		= &CAN0NODE2IN;
-	canNodeConfig.rxPinMode	= IfxPort_InputMode_pullUp;
-	canNodeConfig.txPin		= &CAN0NODE2OUT;
-	canNodeConfig.txPinMode	= IfxPort_OutputMode_pushPull;
-	IfxMultican_Can_Node_init(&CanCommunication_canNode2, &canNodeConfig);
-}
-
-void CanCommunication_reInit(void)
-{
 	/* Can node0 initialization */
 	IfxMultican_Can_NodeConfig canNodeConfig;
 	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
@@ -142,6 +105,11 @@ void CanCommunication_initMessage(CanCommunication_Message* ccMsg, CanCommunicat
 
 boolean CanCommunication_receiveMessage(CanCommunication_Message* msg)
 {
+	if (IfxMultican_Node_recoverBusOff(msg->node) != IfxMultican_Status_ok)
+	{
+		return FALSE;
+	}
+
 	boolean isReceived;
 	IfxMultican_Status  readStatus;
 	if(IfxMultican_Can_MsgObj_isRxPending(&msg->obj))
@@ -176,12 +144,10 @@ boolean CanCommunication_receiveMessage(CanCommunication_Message* msg)
 	return isReceived;
 }
 
-
 void CanCommunication_resetUpdateState(CanCommunication_Message* msg)
 {
 	msg->isUpdated = FALSE;
 }
-
 
 void CanCommunication_transmitMessage(CanCommunication_Message *msg)
 {
@@ -191,6 +157,11 @@ void CanCommunication_transmitMessage(CanCommunication_Message *msg)
 		msg->isUpdated = TRUE;
 	}
 */
+	if (IfxMultican_Node_recoverBusOff(msg->node) != IfxMultican_Status_ok)
+	{
+		return;
+	}
+
 	while(IfxMultican_Can_MsgObj_sendMessage(&msg->obj, &msg->msg) == IfxMultican_Status_notSentBusy )
 	{
 		static uint32 count = 0;
@@ -205,7 +176,6 @@ void CanCommunication_transmitMessage(CanCommunication_Message *msg)
 	}
 	if (msg->isUpdated != FALSE)	msg->isUpdated = TRUE;
 }
-
 
 void CanCommunication_setMessageData(uint32 data0, uint32 data1, CanCommunication_Message *msg)
 {

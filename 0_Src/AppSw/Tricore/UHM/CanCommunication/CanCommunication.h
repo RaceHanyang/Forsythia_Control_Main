@@ -51,7 +51,6 @@ IFX_EXTERN IfxMultican_Can_Node	CanCommunication_canNode2;
 
 /* Function Prototypes */
 IFX_EXTERN void CanCommunication_init(void);
-IFX_EXTERN void CanCommunication_reInit(void);
 
 IFX_EXTERN void CanCommunication_initMessage(CanCommunication_Message* ccMsg, CanCommunication_Message_Config* config);
 
