@@ -716,32 +716,7 @@ IFX_INLINE void RVC_powerComputation(void)
 
 IFX_INLINE void RVC_torqueLimit(void)
 {
-	uint16 dischargeLimit ;
-
-	if(BMS_PDL_ERROR == TRUE)
-	{
-		dischargeLimit = 400;
-		if(RVC_public.bms.data.highestTemp > 45)
-		{
-			dischargeLimit = 200;
-		}
-		else if(RVC_public.bms.data.highestTemp > 50)
-		{
-			dischargeLimit = 100;
-		}
-		else if(RVC_public.bms.data.highestTemp > 55)
-		{
-			dischargeLimit = 50;
-		}
-		if(RVC_public.bms.data.lowestVoltage < 3.0f)
-		{
-			dischargeLimit = 50;
-		}
-	}
-	else
-	{
-		dischargeLimit = RVC_public.bms.data.dischargeLimit;
-	}
+	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
 
 	float32 currentLimitByPower = RVC.power.currentLimit;
 
