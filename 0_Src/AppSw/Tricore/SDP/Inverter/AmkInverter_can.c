@@ -215,6 +215,8 @@ void AmkInverter_writeMessageFront(sint16 torque_left, sint16 torque_right, bool
 //		invWrite(MOTOR_FL, torque_left, accelerating);
 //		invWrite(MOTOR_FR, torque_right, accelerating);
 //	}
+//	invWrite(MOTOR_FL, torque_left, accelerating);
+//	invWrite(MOTOR_FR, torque_right, accelerating);
 	invWrite(MOTOR_FL, torque_left, accelerating);
 	invWrite(MOTOR_FR, torque_right, accelerating);
 }
@@ -327,7 +329,6 @@ static void seqReset(int i)
 
 static void invWrite(int i, sint16 torque, boolean accelerating)
 {
-	if (inv[i].r_amk_actual_values_1.isUpdated == FALSE)	CanCommunication_reInit();
 	// if (inv[i].inv_on == TRUE)
 	// {
 	// 	if (torque > 0)
@@ -359,7 +360,8 @@ static void invWrite(int i, sint16 torque, boolean accelerating)
 	if (inv[i].inv_on == TRUE)
 	{
 		inv[i].inv_switch.target_velocity		= torque;
-		inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
+		if (torque == 0)	inv[i].inv_switch.torque_limit_positv 	= 0;
+		else 				inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
 		inv[i].inv_switch.torque_limit_negativ 	= 0;
 	}
 	else

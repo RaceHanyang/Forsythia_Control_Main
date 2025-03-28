@@ -247,6 +247,7 @@ void Task_IsrCb_1ms (void)
    }
    {
       RVC_run_1ms();
+      SDP_MechMsg_run_1000ms();
    }
    HLD_GtmTomBeeper_run_1ms();
 
@@ -327,7 +328,6 @@ void Task_100ms_slot5(void)
 void Task_1000ms (void)
 {
    SDP_Cooling_Switch();
-   SDP_MechMsg_run_1000ms();
    Task_counter_service_1000ms();
 }
 void Task_1000ms_slot3 (void)

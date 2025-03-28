@@ -117,13 +117,15 @@ void Task_core2_1ms(void)
 	
 	if(task2_10ms_counter == 10)
 	{
+		CanCommunication_reInit();
+
 		torque_fl /= 11;
 		torque_fr /= 11;
 		torque_rl /= 11;
 		torque_rr /= 11;
 
-		AmkInverter_writeMessageFront(torque_fl, torque_fr, accelerating);
-		AmkInverter_writeMessageRear(torque_rl, torque_rr, accelerating);
+		AmkInverter_writeMessageFront((sint16)torque_fl, (sint16)torque_fr, accelerating);
+		AmkInverter_writeMessageRear((sint16)torque_rl, (sint16)torque_rr, accelerating);
 
 		torque_fl = 0;
 		torque_fr = 0;
