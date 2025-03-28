@@ -641,7 +641,7 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 			IfxPort_setPinLow(R2DOUT.port, R2DOUT.pinIndex);
 			// IfxPort_setPinHigh(FWD_OUT.port, FWD_OUT.pinIndex);
 //			if (RVC.RTDS_Tick == 2000)	CanCommunication_reInit();
-			CanCommunication_reInit();
+//			CanCommunication_reInit();
 		}
 		else
 		{	
