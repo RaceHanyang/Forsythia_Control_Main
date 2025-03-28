@@ -356,16 +356,16 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 	float32 diff = (data1->pedalPercent) - (data2->pedalPercent);
 	float32 absDiff = fabs(diff);
 
-//	if (absDiff>50)//ERRLIM)
-//	{
-//		data1 -> isValueOk = FALSE;
-//		data2 -> isValueOk = FALSE;
-//	}
-//	else
-//	{
-//		data1 -> isValueOk = TRUE;
-//		data2 -> isValueOk = TRUE;
-//	}
+	if (absDiff>100)//ERRLIM)
+	{
+		data1 -> isValueOk = FALSE;
+		data2 -> isValueOk = FALSE;
+	}
+	else
+	{
+		data1 -> isValueOk = TRUE;
+		data2 -> isValueOk = TRUE;
+	}
 //
 //	if (data1->pedalPercent < 0 || data1->pedalPercent > 100)
 //	{
