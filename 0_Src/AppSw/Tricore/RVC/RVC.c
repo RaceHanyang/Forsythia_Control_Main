@@ -41,9 +41,10 @@ TODO:
 #include "RVC_r2dSound.h"
 #include "TorqueVectoring/TorqueVectoring.h"
 
-#include "SteeringWheel.h"
 #include "AmkInverter_can.h"
 #include "DashBoardCan.h"
+#include "MechMsg.h"
+#include "SteeringAngleAdc.h"
 
 /**************************** Macro **********************************/
 #define PWMFREQ 5000 // PWM frequency in Hz
@@ -94,8 +95,8 @@ TODO:
 #define BRAKE_ON_BP
 // #define BRAKE_ON_TH_BP1	3.3f
 // #define BRAKE_ON_TH_BP2 5.6f
-#define BRAKE_ON_TH_BP1	15.0f
-#define BRAKE_ON_TH_BP2 15.0f
+#define BRAKE_ON_TH_BP1	20.0f
+#define BRAKE_ON_TH_BP2 20.0f
 
 #define BP_MAX_BAR 172.369f
 #define BP_MAX_V 4.5f
@@ -315,6 +316,7 @@ IFX_STATIC void RVC_initAdcSensor(void)
 	adcConfig.adcConfig.channelIn = &(HLD_Vadc_Channel_In){HLD_Vadc_group0, HLD_Vadc_ChannelId_2};
 	AdcSensor_initSensor(&RVC.BrakePressure2, &adcConfig);
 	HLD_AdcForceStart(RVC.BrakePressure1.adcChannel.channel.group);
+	HLD_AdcForceStart(RVC.BrakePressure2.adcChannel.channel.group);
 
 	/* Steering Angle Analog (Backup function) */
 	//TODO
@@ -599,21 +601,22 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 		IfxPort_setPinLow(FWD_OUT.port, FWD_OUT.pinIndex);
 	}
 	*/
-	static AmkState_t AmkState = AmkState_S0;
-	static AmkState_t pastAmkState = AmkState_S0;
+
+	static boolean curR2d = FALSE;
+	static boolean pastR2d = FALSE;
 
 	/*Store past AMK State*/
-	pastAmkState = AmkState;
+	pastR2d = curR2d;
 
 	/*Get current AMK State*/
 	while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));	//Wait for the mutex
 	{
-		AmkState = AmkInverterPublic.r2d;
+		curR2d = AmkInverterPublic.r2d;
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
 
 	/*Update RTD state*/
-	if(AmkState == AmkState_RTD)
+	if(curR2d == TRUE)
 	{
 		RVC.readyToDrive = RVC_ReadyToDrive_status_run;
 	}
@@ -623,8 +626,11 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 	}
 
 	/*Invoke RTDS*/
-	if((pastAmkState != AmkState_RTD) && (AmkState == AmkState_RTD))
+	if((pastR2d != curR2d) && (curR2d == TRUE))
 	{
+		// Turn off the drivetrain befor entering the ready-to-drive sound
+		RVC.torque.controlled = 0;
+		// Enter ready-to-drive sound
 		rtds = TRUE;
 	}
 
@@ -635,12 +641,15 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 			RVC.RTDS_Tick++;
 			IfxPort_setPinLow(R2DOUT.port, R2DOUT.pinIndex);
 			// IfxPort_setPinHigh(FWD_OUT.port, FWD_OUT.pinIndex);
+//			if (RVC.RTDS_Tick == 2000)	CanCommunication_reInit();
+//			CanCommunication_reInit();
 		}
 		else
 		{	
 			rtds = FALSE;
 			RVC.RTDS_Tick = 0;
 			IfxPort_setPinHigh(R2DOUT.port, R2DOUT.pinIndex);
+//			CanCommunication_reInit();
 			// IfxPort_setPinLow(FWD_OUT.port, FWD_OUT.pinIndex);
 		}
 	}
@@ -648,9 +657,9 @@ IFX_INLINE void RVC_updateReadyToDriveSignal(void)
 
 IFX_INLINE void RVC_slipComputation(void)
 {
-	RVC.slip.axle = SDP_WheelSpeed.velocity.rearAxle/SDP_WheelSpeed.velocity.frontAxle;
-	RVC.slip.left = SDP_WheelSpeed.wssRL.wheelLinearVelocity/SDP_WheelSpeed.wssFL.wheelLinearVelocity;
-	RVC.slip.right = SDP_WheelSpeed.wssRR.wheelLinearVelocity/SDP_WheelSpeed.wssFR.wheelLinearVelocity;
+//	RVC.slip.axle = SDP_WheelSpeed.velocity.rearAxle/SDP_WheelSpeed.velocity.frontAxle;
+//	RVC.slip.left = SDP_WheelSpeed.wssRL.wheelLinearVelocity/SDP_WheelSpeed.wssFL.wheelLinearVelocity;
+//	RVC.slip.right = SDP_WheelSpeed.wssRR.wheelLinearVelocity/SDP_WheelSpeed.wssFR.wheelLinearVelocity;
 	// RVC.diff.rear
 	if(isnan(RVC.slip.axle)||isnan(RVC.slip.left)||isnan(RVC.slip.right)) 
 	{
@@ -708,32 +717,7 @@ IFX_INLINE void RVC_powerComputation(void)
 
 IFX_INLINE void RVC_torqueLimit(void)
 {
-	uint16 dischargeLimit ;
-
-	if(BMS_PDL_ERROR == TRUE)
-	{
-		dischargeLimit = 400;
-		if(RVC_public.bms.data.highestTemp > 45)
-		{
-			dischargeLimit = 200;
-		}
-		else if(RVC_public.bms.data.highestTemp > 50)
-		{
-			dischargeLimit = 100;
-		}
-		else if(RVC_public.bms.data.highestTemp > 55)
-		{
-			dischargeLimit = 50;
-		}
-		if(RVC_public.bms.data.lowestVoltage < 3.0f)
-		{
-			dischargeLimit = 50;
-		}
-	}
-	else
-	{
-		dischargeLimit = RVC_public.bms.data.dischargeLimit;
-	}
+	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
 
 	float32 currentLimitByPower = RVC.power.currentLimit;
 
@@ -797,7 +781,7 @@ IFX_INLINE void RVC_torqueSignalGeneration(void)
 	while(IfxCpu_acquireMutex(&AmkInverterPublic.mutex));	//Wait for the mutex
 	{
 		if(RVC.readyToDrive != RVC_ReadyToDrive_status_run)
-			AmkInverterPublic.r2d = AmkState_S0;
+			AmkInverterPublic.r2d = FALSE;
 		
 		// AmkInverterPublic.fl = RVC.torque.controlled;
 		// AmkInverterPublic.fr = RVC.torque.controlled;
@@ -810,6 +794,8 @@ IFX_INLINE void RVC_torqueSignalGeneration(void)
 		AmkInverterPublic.rr = RVC.torque.rearRight;
 
 		AmkInverterPublic.brakeOn = RVC.brakeOn.tot;
+
+		AmkInverterPublic.acceleraing = (RVC.torque.desired > 0) ? TRUE : FALSE;
 
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
@@ -908,37 +894,18 @@ IFX_INLINE void RVC_updatePwmSignal(void)
 	HLD_GtmTomPwm_setTriggerPointFloat(&RVC.out.decel_rearRight, RVC.pwmDuty.rearRightDec);
 }
 
-IFX_INLINE void VariableUpdateRoutine_steeringWheel(void)
-{
-	SteeringWheel_public.shared.data.vehicleSpeed = SDP_WheelSpeed.velocity.chassis;
-	SteeringWheel_public.shared.data.apps = SDP_PedalBox.apps.pps;
-	SteeringWheel_public.shared.data.bpps = SDP_PedalBox.bpps.pps;
-	if(RVC.readyToDrive == RVC_ReadyToDrive_status_run)
-		SteeringWheel_public.shared.data.isReadyToDrive = TRUE;
-	else
-		SteeringWheel_public.shared.data.isReadyToDrive = FALSE;
-	SteeringWheel_public.shared.data.isAppsChecked = RVC.R2d.isAppsChecked;
-	SteeringWheel_public.shared.data.isBppsChecked1 = RVC.R2d.isBppsChecked1;
-	SteeringWheel_public.shared.data.isBppsChecked2 = RVC.R2d.isBppsChecked2;
-	if(SDP_PedalBox.apps.isValueOk == TRUE)
-		SteeringWheel_public.shared.data.appsError = FALSE;
-	else
-		SteeringWheel_public.shared.data.appsError = TRUE;
-	if(SDP_PedalBox.bpps.isValueOk == TRUE)
-		SteeringWheel_public.shared.data.bppsError = FALSE;
-	else 
-		SteeringWheel_public.shared.data.bppsError = TRUE;
-	SteeringWheel_public.shared.data.lvBatteryVoltage = RVC.LvBattery_Voltage.value;
-}
-
 IFX_INLINE void VariableUpdateRoutine_dashboard(void)
 {
-	DashBoard_public.shared.data.bmsOk = RVC.bmsOk.value;
-	DashBoard_public.shared.data.imdOk = RVC.imdOk.value;
-	DashBoard_public.shared.data.bspdOk = RVC.bspdOk.value;
-	DashBoard_public.shared.data.sdcSenFinal = RVC.sdcSenFinal.value;
-	DashBoard_public.shared.data.brakeOn = RVC.brakeOn.tot;
-	DashBoard_public.shared.data.tsalOn = RVC.tsalOn.value;
+	// DashBoard_public.shared.data.vcu			= RVC.vcuOk.value;
+	DashBoard_public.shared.data.bmsOk 			= RVC.bmsOk.value;
+	DashBoard_public.shared.data.imdOk 			= RVC.imdOk.value;
+	DashBoard_public.shared.data.bspdOk 		= RVC.bspdOk.value;
+	DashBoard_public.shared.data.appsOk 		= SDP_PedalBox.apps.isValueOk;
+	DashBoard_public.shared.data.bppsOk 		= SDP_PedalBox.bpps.isValueOk;
+	DashBoard_public.shared.data.sdcSenFinal 	= RVC.sdcSenFinal.value;
+	DashBoard_public.shared.data.rtdOn 			= (RVC.readyToDrive == RVC_ReadyToDrive_status_run);
+	DashBoard_public.shared.data.brakeOn 		= RVC.brakeOn.tot;
+	DashBoard_public.shared.data.tsalOn 		= RVC.tsalOn.value;
 }
 
 volatile uint32 updateErrorCount_steeringWheel = 0;
@@ -946,26 +913,11 @@ volatile uint32 updateErrorCount_dashboard = 0;
 
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
-	// static uint32 updateErrorCount = 0;
-	if(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex))	//Do not wait.
-	{
-		VariableUpdateRoutine_steeringWheel();
-		IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-		updateErrorCount_steeringWheel = 0;
-	}
-	else if(updateErrorCount_steeringWheel < VAR_UPDATE_ERROR_LIM)
-	{
-		updateErrorCount_steeringWheel++;
-	}
-	else
-	{
-		while(IfxCpu_acquireMutex(&SteeringWheel_public.shared.mutex));
-		{
-			VariableUpdateRoutine_steeringWheel();
-			IfxCpu_releaseMutex(&SteeringWheel_public.shared.mutex);
-		}
-		updateErrorCount_steeringWheel = 0;
-	}
+	mech_msg.steering_and_pedal.s.steering_angel 	= (SDP_SteeringAngleAdc.sta.degree*100);
+	mech_msg.steering_and_pedal.s.apps				=	(uint8)SDP_PedalBox.apps.pps;
+	mech_msg.steering_and_pedal.s.bpps				=	(uint8)SDP_PedalBox.bpps.pps;
+	mech_msg.steering_and_pedal.s.brake_pressure_0	=	(uint16)RVC.BrakePressure1.value * 10;
+	mech_msg.steering_and_pedal.s.brake_pressure_1	=	(uint16)RVC.BrakePressure2.value * 10;
 
 	if(IfxCpu_acquireMutex(&DashBoard_public.shared.mutex))	//Do not wait
 	{

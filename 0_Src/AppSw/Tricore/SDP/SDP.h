@@ -30,8 +30,7 @@
 /******************************************************************************/
 #include "PedalBox.h"
 #include "SteeringAngle.h"
-#include "WheelSpeed.h"
-#include "AccumulatorManager_master.h"
+#include "SteeringAngleAdc.h"
 #include "ShockValue.h"
 #include "Cooling.h"
 

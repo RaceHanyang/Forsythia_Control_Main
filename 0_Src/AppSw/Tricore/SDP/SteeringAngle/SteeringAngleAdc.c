@@ -5,14 +5,20 @@
  *      Author: Suprhimp
  */
 
+#include "SDP.h"
 #include "SteeringAngleAdc.h"
+#include "GtmTim.h"
+#include <math.h>
 
-AdcSensor STA_R;
-AdcSensor STA_L;
+#define SSTROKE		(60.0f)
+#define SSTT		(0.5f) // min = 0.5
+#define SEND		(4.5f) // max = 4.5
 
+AdcSensor STA0;	//	left
+AdcSensor STA1;	//	right
 
-SDP_SteeringAngleAdc_sensor_t SDP_SteeringAngleAdc_sensor_R;
-SDP_SteeringAngleAdc_sensor_t SDP_SteeringAngleAdc_sensor_L;
+SDP_SteeringAngleAdc_angle_t 	SDP_SteeringAngleAdc_angle;
+SDP_SteeringAngleAdc_t 			SDP_SteeringAngleAdc;
 
 void SDP_SteeringAngleAdc_init(void);
 IFX_STATIC void SDP_SteeringAngleAdc_updateSTA_AN(SDP_SteeringAngleAdc_sensor_t *data_out, AdcSensor *data_in);
@@ -28,20 +34,24 @@ void SDP_SteeringAngleAdc_init(void){
 		config_adc.adcConfig.lpf.activated = TRUE;
 
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P10_7_G3CH0_AD5;
-		config_adc.tfConfig.a = 19.65;
-		config_adc.tfConfig.b = 2.64;
+		config_adc.tfConfig.a = SSTROKE / (SEND - SSTT);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-SSTT);
 
-		config_adc.isOvervoltageProtected = TRUE;
+		config_adc.isOvervoltageProtected = FALSE;
 
-		AdcSensor_initSensor(&STA_R, &config_adc);
-		HLD_AdcForceStart(STA_R.adcChannel.channel.group);
+		AdcSensor_initSensor(&STA0, &config_adc);
+		HLD_AdcForceStart(STA0.adcChannel.channel.group);
 
 		//STA1
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P33_10_G5CH4_DA0;
-		config_adc.tfConfig.a = 19.65;
-		config_adc.tfConfig.b = 2.64;
-		AdcSensor_initSensor(&STA_L, &config_adc);
-		HLD_AdcForceStart(STA_L.adcChannel.channel.group);
+		AdcSensor_initSensor(&STA1, &config_adc);
+		HLD_AdcForceStart(STA1.adcChannel.channel.group);
+
+		SDP_SteeringAngleAdc_angle.sta0.config.radius = 33.6f;
+		SDP_SteeringAngleAdc_angle.sta0.config.neutral = 32.0f;
+
+		SDP_SteeringAngleAdc_angle.sta1.config.radius = 14.0f;
+		SDP_SteeringAngleAdc_angle.sta1.config.neutral = 31.1f;
 }
 
 
@@ -50,10 +60,45 @@ IFX_STATIC void SDP_SteeringAngleAdc_updateSTA_AN(SDP_SteeringAngleAdc_sensor_t 
 	AdcSensor_getData(data_in);
 	// data_out->pedalPercent = data_out->config.reversed
 			// ?(float32)100.0 - data_in->value : data_in->value;
-	data_out->Percent = data_in->value * data_out->ratio;
+	data_out->value	 = (data_in->value);
+	data_out->radian = (data_out->config.neutral - data_in->value) / data_out->config.radius;
+}
+
+IFX_STATIC void SDP_SteeringAngleAdc_checkErrorState_fromTwo(SDP_SteeringAngleAdc_sensor_t *data1, SDP_SteeringAngleAdc_sensor_t *data2)
+{
+	data1 -> isValueOk = TRUE;
+	data2 -> isValueOk = TRUE;
 }
 
 void SDP_SteeringAngleAdc_run(){
-    SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_sensor_R,&STA_R);
-	SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_sensor_L,&STA_L);
+	uint8 	okCount = 0;
+	float32 sum = 0;
+
+    SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_angle.sta0,&STA0);
+	SDP_SteeringAngleAdc_updateSTA_AN(&SDP_SteeringAngleAdc_angle.sta1,&STA1);
+
+	SDP_SteeringAngleAdc_checkErrorState_fromTwo(&SDP_SteeringAngleAdc_angle.sta0 , &SDP_SteeringAngleAdc_angle.sta1);
+
+	if (SDP_SteeringAngleAdc_angle.sta0.isValueOk)
+	{
+		sum -= SDP_SteeringAngleAdc_angle.sta0.radian;
+		okCount++;
+	}
+
+	if (SDP_SteeringAngleAdc_angle.sta1.isValueOk)
+	{
+		sum += SDP_SteeringAngleAdc_angle.sta1.radian;
+		okCount++;
+	}
+
+	if (okCount >= 2)
+	{
+		SDP_SteeringAngleAdc.sta.radian = (float32)sum / (float32)okCount;
+		SDP_SteeringAngleAdc.sta.degree = SDP_SteeringAngleAdc.sta.radian * (180.0f / IFX_PI);
+		SDP_SteeringAngleAdc.sta.isValueOk = TRUE;
+	}
+	else
+	{
+		SDP_SteeringAngleAdc.sta.isValueOk = FALSE;
+	}
 }

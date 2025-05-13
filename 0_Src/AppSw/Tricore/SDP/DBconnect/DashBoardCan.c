@@ -10,11 +10,11 @@ StartBtnPushed_t StartBtnMirror;
 CanCommunication_Message StartBtnPushedMsg;
 CanCommunication_Message StartBtnMirrorMsg;
 
-const uint32 DshBrdMsg0 = 0x00081F00UL;
+const uint32 DshBrdMsg0 = 0x00000130UL;
 DashBoardMsg0_t DashBoard_canMsg0;
 CanCommunication_Message DashBoard_msgObj0;
 
-const uint32 DshBrdMsg1 = 0x00081F01UL;
+const uint32 DshBrdMsg1 = 0x00000230UL;
 DashBoardMsg1_t DashBoard_canMsg1;
 CanCommunication_Message DashBoard_msgObj1;
 
@@ -57,16 +57,18 @@ void SDP_DashBoardCan_init(void)
 		CanCommunication_Message_Config config;
 		config.messageId = DshBrdMsg0;
 		config.frameType = IfxMultican_Frame_transmit;
-		config.dataLen = IfxMultican_DataLengthCode_4;
+		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&DashBoard_msgObj0, &config);
 	}
 	{
 		CanCommunication_Message_Config config;
 		config.messageId = DshBrdMsg1;
 		config.frameType = IfxMultican_Frame_receive;
-		config.dataLen = IfxMultican_DataLengthCode_4;
+		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&DashBoard_msgObj1, &config);
 	}
 }
@@ -141,7 +143,7 @@ void SDP_DashBoardCan_run_10ms(void)
 	/*RTD routine*/
 	if(RTD_flag == FALSE)
 	{
-		if(DashBoard_public.data.brakeOn && DashBoard_public.data.tsalOn && DashBoard_canMsg1.B.StartBtn)
+		if(DashBoard_public.data.brakeOn && DashBoard_public.data.tsalOn && DashBoard_canMsg1.B.start_up)
 		{
 			RTD_cnt++;
 			if(RTD_cnt > rtdCntTh)
@@ -157,17 +159,18 @@ void SDP_DashBoardCan_run_10ms(void)
 	}
 	else	//(RTD_flag == TRUE) 
 	{
-		testCnt++;
-		if(DashBoard_canMsg1.B.StartBtn)
-		{
-			RTD_cnt++;
-			if(RTD_cnt > rtdCntTh)
-			{
-				RTD_flag = FALSE;
-				RTD_cnt = 0;
-			}
-		}
-		else if(DashBoard_public.data.tsalOn == FALSE)
+//		testCnt++;
+//		if(DashBoard_canMsg1.B.start_up)
+//		{
+//			RTD_cnt++;
+//			if(RTD_cnt > rtdCntTh)
+//			{
+//				RTD_flag = FALSE;
+//				RTD_cnt = 0;
+//			}
+//		}
+//		else
+		if(DashBoard_public.data.tsalOn == FALSE)
 		{
 			RTD_flag = FALSE;
 		}
@@ -179,12 +182,16 @@ void SDP_DashBoardCan_run_10ms(void)
 	}
 
 	/*Dash Board Info TX*/
-	DashBoard_canMsg0.B.AmkState = (uint8)AmkState;
-	DashBoard_canMsg0.B.SdcAmsOk = DashBoard_public.data.bmsOk;
-	DashBoard_canMsg0.B.SdcImdOk = DashBoard_public.data.imdOk;
-	DashBoard_canMsg0.B.SdcBspdOk = DashBoard_public.data.bspdOk;
-	DashBoard_canMsg0.B.SdcSen = DashBoard_public.data.sdcSenFinal;
-	DashBoard_canMsg0.B.tsalOn = DashBoard_public.data.tsalOn;
+	//	DashBoard_canMsg0.B.AmkState 	= (uint8)AmkState;
+	// 	DashBoard_canMsg0.B.vcu_ok 		= DashBoard_public.data.vcuOk;
+	DashBoard_canMsg0.B.bms_ok 		= DashBoard_public.data.bmsOk;
+	DashBoard_canMsg0.B.imd_ok 		= DashBoard_public.data.imdOk;
+	DashBoard_canMsg0.B.bspd_ok 	= DashBoard_public.data.bspdOk;
+	DashBoard_canMsg0.B.apps_ok 	= DashBoard_public.data.appsOk;
+	DashBoard_canMsg0.B.bpps_ok 	= DashBoard_public.data.bppsOk;
+	DashBoard_canMsg0.B.sdc_ok 		= DashBoard_public.data.sdcSenFinal;
+	DashBoard_canMsg0.B.rtd_on 		= DashBoard_public.data.rtdOn;
+	DashBoard_canMsg0.B.start_cnt 	= RTD_cnt;
 
     CanCommunication_setMessageData(DashBoard_canMsg0.data[0], DashBoard_canMsg0.data[1], &DashBoard_msgObj0);
     CanCommunication_transmitMessage(&DashBoard_msgObj0);

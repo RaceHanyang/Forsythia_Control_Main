@@ -12,7 +12,6 @@
 #include "SchedulerTask_Cpu2.h"
 #include "AmkInverter_can.h"
 #include "OrionBms2.h"
-#include "SteeringWheel.h"
 #include "AdcSensor.h"
 #include "PedalBox.h"
 /******************************************************************************/
@@ -40,7 +39,7 @@ uint64 stm_buf_c2 = 0;
 uint64 stm_buf_c2_delay = 0;
 uint64 ticToc_1ms_c2 = 0;
 uint64 delay_1ms_c2 = 0;
-uint16_t task2_10ms_counter = 0;
+uint16 task2_10ms_counter = 0;
 
 // extern AdcSensor APPS0;
 float32 tpsFl;
@@ -50,10 +49,12 @@ float32 tpsRr;
 
 boolean brakeOn = FALSE;
 
-sint16 valueFl;
-sint16 valueFr;
-sint16 valueRl;
-sint16 valueRr;
+sint16 torque_fl;
+sint16 torque_fr;
+sint16 torque_rl;
+sint16 torque_rr;
+
+boolean accelerating;
 
 int value = 0;
 // boolean RTD_flag;
@@ -83,8 +84,7 @@ void Task_core2_1ms(void)
 	delay_1ms_c2 = (IfxStm_get(&MODULE_STM0) - stm_buf_c2_delay) * 1000000 / (IfxStm_getFrequency(&MODULE_STM0));
 	stm_buf_c2 = IfxStm_get(&MODULE_STM0);
 
-	SDP_PedalBox_run_1ms();
-	SDP_SteeringAngleAdc_run();
+//	SDP_SteeringAngleAdc_run();
 
 	AmkInverter_can_Run();
 
@@ -101,22 +101,38 @@ void Task_core2_1ms(void)
 
 		brakeOn = AmkInverterPublic.brakeOn;
 
+		accelerating = AmkInverterPublic.acceleraing;
+
 		IfxCpu_releaseMutex(&AmkInverterPublic.mutex);
 	}
 
-	valueFl = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFl);
-	valueFr = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFr);
-	valueRl = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRl);
-	valueRr = ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRr);
-
+	torque_fl += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFl);
+	torque_fr += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsFr);
+	torque_rl += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRl);
+	torque_rr += ((float32)AMK_TORQUE_LIM / (100.0f) * tpsRr);
 
 	// AmkInverter_writeMessage(value,value);
 	// AmkInverter_writeMessage2(value,value);
 
-
-	AmkInverter_writeMessage(valueFl,valueFr);
-	AmkInverter_writeMessage2(valueRl,valueRr);
 	
+	if(task2_10ms_counter == 10)
+	{
+		CanCommunication_reInit();
+
+		torque_fl /= 11;
+		torque_fr /= 11;
+		torque_rl /= 11;
+		torque_rr /= 11;
+
+		AmkInverter_writeMessageFront((sint16)torque_fl, (sint16)torque_fr, accelerating);
+		AmkInverter_writeMessageRear((sint16)torque_rl, (sint16)torque_rr, accelerating);
+
+		torque_fl = 0;
+		torque_fr = 0;
+		torque_rl = 0;
+		torque_rr = 0;
+	}
+
 	// else if (task2_10ms_counter ==15)
 	// SDP_DashBoardCan_run_10ms();
 
@@ -149,13 +165,12 @@ IFX_STATIC void Task_core2_10ms_slot0(void)
 	2143 -> 214.3% of nominal torque 21Nm
 	maby 21Nm is max by datasheet graph
 	*/
-	AMKInverter_runLogging();
 
 }
 
 IFX_STATIC void Task_core2_10ms_slot1(void)
 {
-	SteeringWheel_run_xms_c2();
+	// SteeringWheel_run_xms_c2();
 }
 
 void Task_core2_backgroundService(void)

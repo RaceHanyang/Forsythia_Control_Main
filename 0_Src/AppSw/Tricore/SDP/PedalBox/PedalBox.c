@@ -44,11 +44,18 @@
 #define V0_CONST_A 		-9.2980636458f
 #define V0_CONST_B		100.7315829998f
 #elif PPSMODE == ADC
-#define A0STT		(1.15f)
-#define A0END		(3.20f)
+#define ASTROKE		(100.0f)
 
-#define A1STT		(0.74f)
-#define A1END		(2.00f)
+#define A0STT		(1.74f) // min = 0.5
+#define A0END		(3.81f) // max = 4.5
+
+#define A1STT		(1.18f) // min = 0.33
+#define A1END		(2.53f) // max = 2.97
+
+#define BSTROKE		(100.0f)
+
+#define BSTT		(0.50f)
+#define BEND		(1.62f)
 #endif
 
 #define PBERRORLIMIT	10
@@ -97,7 +104,7 @@ typedef struct
 /******************************************************************************/
 /*------------------------------Global variables------------------------------*/
 /******************************************************************************/
-float32				SDP_PedalBox_errorLimit = PBERRORLIMIT;
+float32 SDP_PedalBox_errorLimit = PBERRORLIMIT;
 
 SDP_PedalBox_pps_t	SDP_PedalBox_pps;
 SDP_PedalBox_t		SDP_PedalBox;
@@ -166,8 +173,10 @@ void SDP_PedalBox_init(void)
 		config_adc.adcConfig.lpf.activated = TRUE;
 
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P20_6_G2CH4_AD7;
-		config_adc.tfConfig.a = 100.0f / (A0END - A0STT);
-		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0STT);
+//		config_adc.tfConfig.a = 100.0f / (A0END - A0STT);
+//		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0STT);
+		config_adc.tfConfig.a = ASTROKE / (A0STT - A0END);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A0END);
 
 		config_adc.isOvervoltageProtected = TRUE;
 
@@ -176,8 +185,10 @@ void SDP_PedalBox_init(void)
 
 		//APPS1
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P23_4_G0CH0_AD11;
-		config_adc.tfConfig.a = 100.0f / (A1END - A1STT);
-		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1STT);
+//		config_adc.tfConfig.a = 100.0f / (A1END - A1STT);
+//		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1STT);
+		config_adc.tfConfig.a = ASTROKE / (A1STT - A1END);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-A1END);
 		AdcSensor_initSensor(&APPS1, &config_adc);
 		HLD_AdcForceStart(APPS1.adcChannel.channel.group);
 		
@@ -188,8 +199,8 @@ void SDP_PedalBox_init(void)
 		config_adc.adcConfig.lpf.config.samplingTime = 10.0e-3;
 		config_adc.isOvervoltageProtected = FALSE;
 		config_adc.linCalConfig.isAct = FALSE;
-		config_adc.tfConfig.a = 22.5;
-		config_adc.tfConfig.b = -6.25;
+		config_adc.tfConfig.a = BSTROKE / (BEND - BSTT);
+		config_adc.tfConfig.b = config_adc.tfConfig.a * (-BSTT);
 		
 		config_adc.adcConfig.channelIn = &HLD_Vadc_P23_2_G4CH4_AD3;
 
@@ -200,6 +211,19 @@ void SDP_PedalBox_init(void)
 
 		AdcSensor_initSensor(&BPPS1, &config_adc);
 		HLD_AdcForceStart(BPPS1.adcChannel.channel.group);
+
+		SDP_PedalBox_pps.apps0.f_samp 	= 	1000;
+		SDP_PedalBox_pps.apps0.w_c		=	1000;
+
+		SDP_PedalBox_pps.apps1.f_samp 	= 	1000;
+		SDP_PedalBox_pps.apps1.w_c		=	1000;
+
+		SDP_PedalBox_pps.bpps0.f_samp	=	1;
+		SDP_PedalBox_pps.bpps0.w_c		=	1;
+
+		SDP_PedalBox_pps.bpps1.f_samp	=	1;
+		SDP_PedalBox_pps.bpps1.w_c		=	1;
+
 	#endif
 
 }
@@ -336,8 +360,10 @@ IFX_STATIC void SDP_PedalBox_updatePPS(SDP_PedalBox_sensor_t *data_out, HLD_GtmT
 IFX_STATIC void SDP_PedalBox_updatePPS_AN(SDP_PedalBox_sensor_t *data_out, AdcSensor *data_in)
 {
 	AdcSensor_getData(data_in);
-	data_out->pedalPercent = data_out->config.reversed
+	data_out->raw_pedalPercent = data_out->config.reversed
 			?(float32)100.0 - data_in->value : data_in->value;
+	data_out->pedalPercent = data_out->pre_pedalPercent + (data_out->w_c / data_out->f_samp) * (data_out->raw_pedalPercent - data_out->pre_pedalPercent);
+	data_out->pre_pedalPercent = data_out->pedalPercent;
 }
 
 IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data1, SDP_PedalBox_sensor_t *data2)
@@ -345,7 +371,7 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 	float32 diff = (data1->pedalPercent) - (data2->pedalPercent);
 	float32 absDiff = fabs(diff);
 
-	if (absDiff>ERRLIM)
+	if (absDiff>100)//ERRLIM)
 	{
 		data1 -> isValueOk = FALSE;
 		data2 -> isValueOk = FALSE;
@@ -355,6 +381,15 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 		data1 -> isValueOk = TRUE;
 		data2 -> isValueOk = TRUE;
 	}
+
+//	if (data1->pedalPercent < 0 || data1->pedalPercent > 100)
+//	{
+//		data1 -> isValueOk = FALSE;
+//	}
+//	if (data2->pedalPercent < 0 || data2->pedalPercent > 100)
+//	{
+//		data2 -> isValueOk = FALSE;
+//	}
 }
 
 

@@ -39,6 +39,7 @@
 #include "IfxScu_bf.h"
 #include "Cpu/Std/IfxCpu_Intrinsics.h"
 #include "Src/Std/IfxSrc.h"
+#include "Platform_Types.h"
 /** \addtogroup IfxLld_Dts_Std_Control
  * \{ */
 
