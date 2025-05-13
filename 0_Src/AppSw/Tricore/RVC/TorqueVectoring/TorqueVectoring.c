@@ -12,7 +12,7 @@
 #define TVOPEN_LSD_ON		FALSE
 #define TVOPEN_LSD_GAIN		1.0f
 
-#define FRONT_DIST			0.4f
+#define FD 0.2f
 
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;
@@ -37,8 +37,8 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 //	float32 fd = 2 * RVC.torque.frontDist;
 //	RVC.torque.frontLeft = fd * RVC.torque.controlled;
 //	RVC.torque.frontRight = fd * RVC.torque.controlled;
-	RVC.torque.frontLeft = FRONT_DIST * RVC.torque.controlled;
-	RVC.torque.frontRight = FRONT_DIST * RVC.torque.controlled;
+	RVC.torque.frontLeft = FD * RVC.torque.controlled;
+	RVC.torque.frontRight = FD * RVC.torque.controlled;
 	RVC.torque.rearLeft = RVC.torque.controlled;
 	RVC.torque.rearRight = RVC.torque.controlled;
 }

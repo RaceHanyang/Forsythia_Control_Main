@@ -47,11 +47,11 @@ void SDP_SteeringAngleAdc_init(void){
 		AdcSensor_initSensor(&STA1, &config_adc);
 		HLD_AdcForceStart(STA1.adcChannel.channel.group);
 
-		SDP_SteeringAngleAdc_angle.sta0.config.radius = 14.0f;
-		SDP_SteeringAngleAdc_angle.sta0.config.neutral = 0.0f;
+		SDP_SteeringAngleAdc_angle.sta0.config.radius = 33.6f;
+		SDP_SteeringAngleAdc_angle.sta0.config.neutral = 32.0f;
 
-		SDP_SteeringAngleAdc_angle.sta0.config.radius = 14.0f;
-		SDP_SteeringAngleAdc_angle.sta0.config.neutral = 0.0f;
+		SDP_SteeringAngleAdc_angle.sta1.config.radius = 14.0f;
+		SDP_SteeringAngleAdc_angle.sta1.config.neutral = 31.1f;
 }
 
 
@@ -66,28 +66,8 @@ IFX_STATIC void SDP_SteeringAngleAdc_updateSTA_AN(SDP_SteeringAngleAdc_sensor_t 
 
 IFX_STATIC void SDP_SteeringAngleAdc_checkErrorState_fromTwo(SDP_SteeringAngleAdc_sensor_t *data1, SDP_SteeringAngleAdc_sensor_t *data2)
 {
-	float32 diff = fabs(data1->radian) - fabs(data2->radian);
-	float32 absDiff = fabs(diff);
-
-	if (absDiff>10)
-	{
-		data1 -> isValueOk = FALSE;
-		data2 -> isValueOk = FALSE;
-	}
-	else
-	{
-		data1 -> isValueOk = TRUE;
-		data2 -> isValueOk = TRUE;
-	}
-
-	if (data1->value < 0 || data1->value > SSTROKE)
-	{
-		data1 -> isValueOk = FALSE;
-	}
-	if (data2->value < 0 || data2->value > SSTROKE)
-	{
-		data2 -> isValueOk = FALSE;
-	}
+	data1 -> isValueOk = TRUE;
+	data2 -> isValueOk = TRUE;
 }
 
 void SDP_SteeringAngleAdc_run(){

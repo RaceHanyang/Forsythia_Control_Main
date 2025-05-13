@@ -13,37 +13,114 @@
 
 
 /************************* Data Structures ***************************/
-typedef struct 
+// id 0x300
+// freq 8ms
+// ccl: charge current limit
+// dcl: discharge current limit
+typedef union // power
 {
-	uint16 packCurrent;
-	uint16 packVoltage;
-	uint8 packSoc;
-}OrionBms2_msg1_t;
+    uint32 data[2];
+    struct
+    {
+        uint16 current                   :16;    //[0-15]
+        uint16 voltage                   :16;    //[16-31]
+        uint16 ccl                       :16;    //[32-47] 
+        uint16 dcl                       :16;    //[48-63]
+    } s;
+} pack_pow_t;
+
+// id 0x20000
+// freq 1000ms
+// cl: current limit
+typedef union
+{
+    uint32 data[2];
+    struct
+    {
+        uint16 failsafe_status           :16;    //[0-15]
+        uint16 dtc_status_1              :16;    //[16-31]
+        uint16 dtc_status_2              :16;    //[32-47]
+        uint16 cl_status                 :16;    //[48-63]
+    } s;
+} pack_status_t;
+
+// id 0x40000
+// freq 104ms
+typedef union // cell voltage
+{
+    uint32 data[2];
+    struct
+    {
+        uint8  highest_cv_id             :8;     //[0-7]
+        uint16 highest_cv                :16;    //[8-23]
+        uint16 average_cv                :16;    //[24-39]
+        uint8  lowest_cv_id              :8;     //[40-47]
+        uint16 lowest_cv                 :16;    //[48-63]
+    } s;
+} pack_cv_t;
+
+// id 0x40001
+// freq 104ms
+typedef union // open cell voltage
+{
+    uint32 data[2];
+    struct
+    {
+        uint8  highest_ocv_id            :8;     //[0-7]
+        uint16 highest_ocv               :16;    //[8-23]
+        uint16 average_ocv               :16;    //[24-39]
+        uint8  lowest_ocv_id             :8;     //[40-47]
+        uint16 lowest_ocv                :16;    //[48-63]
+    } s;
+} pack_ocv_t;
+
+// id 0x40002
+// freq 104ms
+typedef union
+{
+    uint32 data[2];
+    struct
+    {
+        uint8  highest_therm_id          :8;     //[0-7]
+        uint8  highest_temp              :8;     //[8-15]
+        uint8  average_temp              :8;     //[16-23]
+        uint8  lowest_therm_id           :8;     //[24-31]
+        uint8  lowest_temp               :8;     //[32-39]
+        uint16 resistance                :16;    //[40-55]
+        uint8  reserved                  :8;     //[56-63]
+    } s;
+} pack_temp_t;
+
+// id 0x40003
+// freq 1000ms
+typedef union // state of charge
+{
+    uint32 data[2];
+    struct
+    {
+        uint8  soc                       :8;     //[0-7]
+        uint8  adaptive_soc              :8;     //[8-15]
+        uint16 adaptivc_tot_cap          :16;    //[16-31]
+        uint16 open_voltage              :8;     //[32-47]
+        uint16 reserved                  :16;    //[48-63]
+    } s;
+} pack_soc_t;
 
 typedef struct 
 {
-	uint16 packChargeLimit;
-	uint16 packDischargeLimit;
-}OrionBms2_msg2_t;
+	pack_pow_t pack_pow;
+	pack_status_t pack_status;
+	pack_cv_t pack_cv;
+	pack_ocv_t pack_ocv;
+	pack_temp_t pack_temp;
+	pack_soc_t pack_soc;
 
-typedef struct
-{
-	uint8 highTemp;
-	uint8 highCell;
-	uint8 avgTemp;
-	uint8 bmsTemp;
-	uint16 lowVoltage;
-}OrionBms2_msg3_t;
-
-typedef struct 
-{
-	OrionBms2_msg1_t msg1;
-	OrionBms2_msg2_t msg2;
-	OrionBms2_msg3_t msg3;
-
-	CanCommunication_Message msgObj1;
-	CanCommunication_Message msgObj2;
-	CanCommunication_Message msgObj3;
+	CanCommunication_Message pack_pow_msg;
+	CanCommunication_Message pack_status_msg;
+	CanCommunication_Message pack_cv_msg;
+	CanCommunication_Message pack_ocv_msg;
+	CanCommunication_Message pack_temp_msg;
+	CanCommunication_Message pack_soc_msg;
 
 	uint32 canErrorCount;
 	boolean canError;

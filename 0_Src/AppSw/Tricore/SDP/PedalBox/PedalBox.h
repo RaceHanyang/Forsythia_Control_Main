@@ -70,7 +70,11 @@ typedef struct
 typedef struct
 {
 	SDP_PedalBox_sensorConfig_t	config;
+	float32						f_samp;
+	float32						w_c;
+	float32						raw_pedalPercent;
 	float32						pedalPercent;
+	float32						pre_pedalPercent;
 	boolean						isValueOk;
 }SDP_PedalBox_sensor_t;
 

@@ -20,7 +20,7 @@ typedef union
     uint32 data[2];
     struct
     {
-        uint16 	steering_angel     :16;    //[0-15]
+        sint16 	steering_angel     :16;    //[0-15]
         uint8 	apps               :8;     //[16-23]
         uint8 	bpps               :8;     //[24-31]
         uint16 	brake_pressure_0   :16;    //[32-47]

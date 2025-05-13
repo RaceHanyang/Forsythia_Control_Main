@@ -15,13 +15,8 @@ typedef struct
 {
 	float32 current;
 	float32 voltage;
-	float32 soc;
 	uint16 chargeLimit;
 	uint16 dischargeLimit;
-	float32 lowestVoltage;
-	sint8 highestTemp;
-	sint8 averageTemp;
-	sint8 bmsTemp;
 
 	IfxCpu_mutexLock mutex;
 	boolean isUpdated;

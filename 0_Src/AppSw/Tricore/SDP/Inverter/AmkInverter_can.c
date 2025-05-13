@@ -2,14 +2,14 @@
 #include "HLD.h"
 
 #if AMK_MODE == 0
-#define AMK_VELOCITY_LIM  			18000
-#define AMK_VELOCITY_STOP  			0
-#define AMK_TORQUE_POSITIVE_LIM  	2143
-#define AMK_TORQUE_NEGATIVE_LIM  	-2143
+#define AMK_VELOCITY_LIM  			(18000)
+#define AMK_VELOCITY_STOP  			(0)
+#define AMK_TORQUE_POSITIVE_LIM  	(2143)
+#define AMK_TORQUE_NEGATIVE_LIM  	(-2143)
 
-#define MAX_AMK_ERROR_RESET			10
+#define MAX_AMK_ERROR_RESET			(10)
 
-#define AMK_RESTART_ERROR			3587
+#define AMK_RESTART_ERROR			(3587)
 
 #define MOTOR_FL 1
 #define MOTOR_FR 2
@@ -215,6 +215,8 @@ void AmkInverter_writeMessageFront(sint16 torque_left, sint16 torque_right, bool
 //		invWrite(MOTOR_FL, torque_left, accelerating);
 //		invWrite(MOTOR_FR, torque_right, accelerating);
 //	}
+//	invWrite(MOTOR_FL, torque_left, accelerating);
+//	invWrite(MOTOR_FR, torque_right, accelerating);
 	invWrite(MOTOR_FL, torque_left, accelerating);
 	invWrite(MOTOR_FR, torque_right, accelerating);
 }
@@ -358,8 +360,14 @@ static void invWrite(int i, sint16 torque, boolean accelerating)
 	if (inv[i].inv_on == TRUE)
 	{
 		inv[i].inv_switch.target_velocity		= torque;
-		inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
+		if (torque == 0)	inv[i].inv_switch.torque_limit_positv 	= 0;
+		else 				inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
 		inv[i].inv_switch.torque_limit_negativ 	= 0;
+		/*
+		if (torque == 0)	inv[i].inv_switch.torque_limit_negativ 	= 0;
+		else 				inv[i].inv_switch.torque_limit_negativ 	= AMK_TORQUE_NEGATIVE_LIM;
+		inv[i].inv_switch.torque_limit_positv 	= 0;
+		*/
 	}
 	else
 	{

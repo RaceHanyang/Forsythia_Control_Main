@@ -47,5 +47,6 @@ typedef struct
 IFX_EXTERN SDP_SteeringAngleAdc_sensor_t SDP_SteeringAngleAdc_sensor;
 IFX_EXTERN void SDP_SteeringAngleAdc_init(void);
 IFX_EXTERN void SDP_SteeringAngleAdc_run(void);
+IFX_EXTERN SDP_SteeringAngleAdc_t 			SDP_SteeringAngleAdc;
 
 #endif

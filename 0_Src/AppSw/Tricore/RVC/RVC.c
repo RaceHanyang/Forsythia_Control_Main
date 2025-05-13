@@ -44,6 +44,7 @@ TODO:
 #include "AmkInverter_can.h"
 #include "DashBoardCan.h"
 #include "MechMsg.h"
+#include "SteeringAngleAdc.h"
 
 /**************************** Macro **********************************/
 #define PWMFREQ 5000 // PWM frequency in Hz
@@ -94,8 +95,8 @@ TODO:
 #define BRAKE_ON_BP
 // #define BRAKE_ON_TH_BP1	3.3f
 // #define BRAKE_ON_TH_BP2 5.6f
-#define BRAKE_ON_TH_BP1	15.0f
-#define BRAKE_ON_TH_BP2 15.0f
+#define BRAKE_ON_TH_BP1	20.0f
+#define BRAKE_ON_TH_BP2 20.0f
 
 #define BP_MAX_BAR 172.369f
 #define BP_MAX_V 4.5f
@@ -716,32 +717,7 @@ IFX_INLINE void RVC_powerComputation(void)
 
 IFX_INLINE void RVC_torqueLimit(void)
 {
-	uint16 dischargeLimit ;
-
-	if(BMS_PDL_ERROR == TRUE)
-	{
-		dischargeLimit = 400;
-		if(RVC_public.bms.data.highestTemp > 45)
-		{
-			dischargeLimit = 200;
-		}
-		else if(RVC_public.bms.data.highestTemp > 50)
-		{
-			dischargeLimit = 100;
-		}
-		else if(RVC_public.bms.data.highestTemp > 55)
-		{
-			dischargeLimit = 50;
-		}
-		if(RVC_public.bms.data.lowestVoltage < 3.0f)
-		{
-			dischargeLimit = 50;
-		}
-	}
-	else
-	{
-		dischargeLimit = RVC_public.bms.data.dischargeLimit;
-	}
+	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
 
 	float32 currentLimitByPower = RVC.power.currentLimit;
 
@@ -937,7 +913,7 @@ volatile uint32 updateErrorCount_dashboard = 0;
 
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
-	mech_msg.steering_and_pedal.s.steering_angel 	= 0;
+	mech_msg.steering_and_pedal.s.steering_angel 	= (SDP_SteeringAngleAdc.sta.degree*100);
 	mech_msg.steering_and_pedal.s.apps				=	(uint8)SDP_PedalBox.apps.pps;
 	mech_msg.steering_and_pedal.s.bpps				=	(uint8)SDP_PedalBox.bpps.pps;
 	mech_msg.steering_and_pedal.s.brake_pressure_0	=	(uint16)RVC.BrakePressure1.value * 10;

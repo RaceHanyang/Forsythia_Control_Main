@@ -172,9 +172,9 @@ void Task_init (void)
       SDP_ShockValue_init();
       // SDP_ShockValue_log_init();
       SDP_Cooling_init();
-      // SDP_SteeringAngleAdc_init();
+      SDP_SteeringAngleAdc_init();
       SDP_DashBoardCan_init();
-//      SDP_Accumulator_init();
+      SDP_Accumulator_init();
       SDP_MechMsg_init();
    }
    /* Hmm... */
@@ -241,7 +241,7 @@ void Task_IsrCb_1ms (void)
 
       // SDP_WheelSpeed_run_1ms();
       SDP_PedalBox_run_1ms();
-      // SDP_SteeringAngleAdc_run();
+      SDP_SteeringAngleAdc_run();
       // SDP_ShockValue_run_1ms();
 
    }
@@ -271,7 +271,7 @@ void Task_10ms_slot1 (void)
 {
    stm_buf = IfxStm_get(&MODULE_STM0);
    SDP_Cooling_run_10ms();
-//   SDP_Accumulator_run_10ms();
+   SDP_Accumulator_run_10ms();
 
    //   HLD_Imu_run_10ms_s1();
 

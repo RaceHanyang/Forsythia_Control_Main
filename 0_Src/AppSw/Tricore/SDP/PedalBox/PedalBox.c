@@ -211,6 +211,19 @@ void SDP_PedalBox_init(void)
 
 		AdcSensor_initSensor(&BPPS1, &config_adc);
 		HLD_AdcForceStart(BPPS1.adcChannel.channel.group);
+
+		SDP_PedalBox_pps.apps0.f_samp 	= 	1000;
+		SDP_PedalBox_pps.apps0.w_c		=	1000;
+
+		SDP_PedalBox_pps.apps1.f_samp 	= 	1000;
+		SDP_PedalBox_pps.apps1.w_c		=	1000;
+
+		SDP_PedalBox_pps.bpps0.f_samp	=	1;
+		SDP_PedalBox_pps.bpps0.w_c		=	1;
+
+		SDP_PedalBox_pps.bpps1.f_samp	=	1;
+		SDP_PedalBox_pps.bpps1.w_c		=	1;
+
 	#endif
 
 }
@@ -347,8 +360,10 @@ IFX_STATIC void SDP_PedalBox_updatePPS(SDP_PedalBox_sensor_t *data_out, HLD_GtmT
 IFX_STATIC void SDP_PedalBox_updatePPS_AN(SDP_PedalBox_sensor_t *data_out, AdcSensor *data_in)
 {
 	AdcSensor_getData(data_in);
-	data_out->pedalPercent = data_out->config.reversed
+	data_out->raw_pedalPercent = data_out->config.reversed
 			?(float32)100.0 - data_in->value : data_in->value;
+	data_out->pedalPercent = data_out->pre_pedalPercent + (data_out->w_c / data_out->f_samp) * (data_out->raw_pedalPercent - data_out->pre_pedalPercent);
+	data_out->pre_pedalPercent = data_out->pedalPercent;
 }
 
 IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data1, SDP_PedalBox_sensor_t *data2)
@@ -366,7 +381,7 @@ IFX_STATIC void SDP_PedalBox_checkErrorState_fromTwo(SDP_PedalBox_sensor_t *data
 		data1 -> isValueOk = TRUE;
 		data2 -> isValueOk = TRUE;
 	}
-//
+
 //	if (data1->pedalPercent < 0 || data1->pedalPercent > 100)
 //	{
 //		data1 -> isValueOk = FALSE;
