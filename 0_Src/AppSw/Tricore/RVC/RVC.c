@@ -147,8 +147,6 @@ IFX_STATIC void RVC_pollGpi(RVC_Gpi_t *gpi);
 IFX_INLINE void RVC_updateReadyToDriveSignal(void);
 IFX_INLINE void RVC_slipComputation(void);
 IFX_INLINE void RVC_getTorqueRequired(void);
-IFX_INLINE void RVC_powerComputation(void);
-IFX_INLINE void RVC_torqueLimit(void);
 IFX_INLINE void RVC_torqueSatuation(void);
 IFX_INLINE void RVC_torqueDistrobution(void);
 IFX_INLINE void RVC_torqueSignalGeneration(void);
@@ -209,10 +207,6 @@ void RVC_run_1ms(void)
 	RVC.brakeOn.tot = RVC.brakeOn.bp1 | RVC.brakeOn.bp2;
 
 	/* TODO: Torque limit: Traction control */
-
-	RVC_powerComputation();
-
-	RVC_torqueLimit();
 
 	RVC_torqueSatuation();
 
@@ -709,32 +703,6 @@ IFX_INLINE void RVC_getTorqueRequired(void)
 #endif
 }
 
-IFX_INLINE void RVC_powerComputation(void)
-{
-	RVC.power.value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
-	RVC.power.currentLimit = RVC.power.limit / RVC_public.bms.data.voltage;
-}
-
-IFX_INLINE void RVC_torqueLimit(void)
-{
-	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
-
-	float32 currentLimitByPower = RVC.power.currentLimit;
-
-	RVC.currentLimit.value = (dischargeLimit > currentLimitByPower) ? currentLimitByPower : dischargeLimit;
-
-	RVC.currentLimit.margin = RVC.currentLimit.value - RVC_public.bms.data.current;
-
-	if(RVC.currentLimit.margin < RVC.currentLimit.setValue)
-	{
-		RVC.torque.controlled = RVC.torque.controlled * RVC.currentLimit.margin / RVC.currentLimit.setValue;
-		RVC.currentLimit.isLimited = TRUE;
-	}
-	else
-	{
-		RVC.currentLimit.isLimited = FALSE;
-	}
-}
 
 IFX_INLINE void RVC_torqueSatuation(void)
 {
