@@ -17,6 +17,25 @@
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;
 
+TV_t tv =
+{
+	.enable.v_x = 0.0f,
+	.enable.delta_sta = 0.0f,
+	.enable.k_1 = 0.25f,
+
+	.error.k_2 = 0.0f,
+	.error.i = 0.0f,
+
+	.pid.k_p = 0.0f,
+	.pid.k_i = 0.0f,
+	.pid.k_d = 0.0f,
+	.pid.k_b = 0.0f,
+
+	.limit.max_delta_trq = 1.0f,
+
+	.tv.t = 1.0f
+};
+
 /* Function Implementation */
 void RVC_TorqueVectoring_run_modeOpen(void)
 {
