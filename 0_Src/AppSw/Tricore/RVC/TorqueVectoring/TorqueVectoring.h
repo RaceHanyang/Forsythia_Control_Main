@@ -31,7 +31,10 @@ typedef struct
 	{
 		double k_p; // proportional gain
 		double k_i; // integral gain
+		double i_err;	// integral
 		double k_d; // derivative gain
+		double pre_err;	// prev error
+		double dt;
 		double k_b; // inverse calculation constant == k_i
 	} pid;
 

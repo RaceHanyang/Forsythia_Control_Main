@@ -47,7 +47,7 @@ void SDP_SteeringAngleAdc_init(void){
 		AdcSensor_initSensor(&STA1, &config_adc);
 		HLD_AdcForceStart(STA1.adcChannel.channel.group);
 
-		SDP_SteeringAngleAdc_angle.sta0.config.radius = 33.6f;
+		SDP_SteeringAngleAdc_angle.sta0.config.radius = 14.0f;
 		SDP_SteeringAngleAdc_angle.sta0.config.neutral = 32.0f;
 
 		SDP_SteeringAngleAdc_angle.sta1.config.radius = 14.0f;
