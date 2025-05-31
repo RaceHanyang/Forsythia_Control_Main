@@ -12,7 +12,7 @@
 #define TVOPEN_LSD_ON		FALSE
 #define TVOPEN_LSD_GAIN		1.0f
 
-#define FD 0.2f
+#define FD 1.0f
 
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;

@@ -11,18 +11,17 @@
 
 RVC.power.limit = POWER_LIMIT;
 
-void power_computation(void);
-void torque_limit(void);
-void PID_computation(void);
-void 
+void PowerComputation(void);
+void TorqueLimit(void);
+void PIDComputation(void);
 
-IFX_STATIC void power_computation(void)
+IFX_STATIC void PowerComputation(void)
 {
 	RVC.power.value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
 	RVC.power.currentLimit = RVC.power.limit / RVC_public.bms.data.voltage;
 }
 
-IFX_STATIC float PID_computation(float error)
+IFX_STATIC float PIDComputation(float error)
 {
     float integral;
     float derivative;
@@ -39,7 +38,7 @@ IFX_STATIC float PID_computation(float error)
     return output;
 }
 
-IFX_STATIC void torque_limit(void)
+IFX_STATIC void TorqueLimit(void)
 {
     float power_over;
     if(RVC.power.value <= POWER_LIMIT)
@@ -64,6 +63,6 @@ IFX_STATIC void torque_limit(void)
 
 void POWERLIMIT_run_1ms(void)
 {
-    void power_computation();
-    void torque_limit();
+    void PowerComputation();
+    void TorqueLimit();
 }
