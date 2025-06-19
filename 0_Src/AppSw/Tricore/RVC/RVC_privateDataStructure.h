@@ -172,6 +172,11 @@ typedef struct
 
 	struct Monitor AmkMonitor;
 
+	struct
+	{
+		float32 sta;
+	} tv;
+
 
 	uint16 RTDS_Tick;
 
