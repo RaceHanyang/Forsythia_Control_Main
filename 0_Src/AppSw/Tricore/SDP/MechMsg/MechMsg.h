@@ -30,18 +30,38 @@ typedef union
 
 typedef struct
 {
+    sint16 	steering_angel     :16;    //[0-15]
+    uint8 	apps               :8;     //[16-23]
+    uint8 	bpps               :8;     //[24-31]
+    uint16 	brake_pressure_0   :16;    //[32-47]
+    uint16 	brake_pressure_1   :16;    //[48-63]
+} steering_and_pedal_info_t;
+
+typedef struct
+{
 	steering_and_pedal_t steering_and_pedal;
 
 	CanCommunication_Message steering_and_pedal_msg;
 
 } mech_msg_t;
 
+typedef struct
+{
+	steering_and_pedal_info_t data;
+	struct
+	{
+		steering_and_pedal_info_t data;
+		IfxCpu_mutexLock mutex;
+	}shared;
+} mech_msg_public_t;
+
 /************************ Global Variables ***************************/
 IFX_EXTERN mech_msg_t mech_msg;
+IFX_EXTERN mech_msg_public_t mech_msg_public;
 
 /*********************** Function Prototypes *************************/
 IFX_EXTERN void SDP_MechMsg_init(void);
-IFX_EXTERN void SDP_MechMsg_run_1000ms(void);
+IFX_EXTERN void SDP_MechMsg_run_10ms(void);
 
 
 

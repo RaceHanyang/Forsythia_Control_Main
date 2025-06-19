@@ -191,6 +191,8 @@ void RVC_run_1ms(void)
 		IfxCpu_releaseMutex(&AmkInverterMonitorPublic.mutex);
 	}
 
+	RVC.tv.sta = SDP_SteeringAngleAdc.sta.degree;
+
 	RVC_slipComputation();
 
 	RVC_getTorqueRequired();
@@ -908,17 +910,20 @@ IFX_INLINE void VariableUpdateRoutine_dashboard(void)
 	DashBoard_public.shared.data.tsalOn 		= RVC.tsalOn.value;
 }
 
-volatile uint32 updateErrorCount_steeringWheel = 0;
+IFX_INLINE void VariableUpdateRoutine_mech_msg(void)
+{
+	mech_msg_public.shared.data.steering_angel = (sint16)(SDP_SteeringAngleAdc.sta.degree*100);
+	mech_msg_public.shared.data.apps = (uint8)SDP_PedalBox.apps.pps;
+	mech_msg_public.shared.data.bpps = (uint8)SDP_PedalBox.bpps.pps;
+	mech_msg_public.shared.data.brake_pressure_0 = (uint16)RVC.BrakePressure1.value * 10;
+	mech_msg_public.shared.data.brake_pressure_1 = (uint16)RVC.BrakePressure2.value * 10;
+}
+
 volatile uint32 updateErrorCount_dashboard = 0;
+volatile uint32 updateErrorCount_mech_msg = 0;
 
 IFX_INLINE void RVC_updateSharedVariable(void)
 {
-	mech_msg.steering_and_pedal.s.steering_angel 	= (SDP_SteeringAngleAdc.sta.degree*100);
-	mech_msg.steering_and_pedal.s.apps				=	(uint8)SDP_PedalBox.apps.pps;
-	mech_msg.steering_and_pedal.s.bpps				=	(uint8)SDP_PedalBox.bpps.pps;
-	mech_msg.steering_and_pedal.s.brake_pressure_0	=	(uint16)RVC.BrakePressure1.value * 10;
-	mech_msg.steering_and_pedal.s.brake_pressure_1	=	(uint16)RVC.BrakePressure2.value * 10;
-
 	if(IfxCpu_acquireMutex(&DashBoard_public.shared.mutex))	//Do not wait
 	{
 		VariableUpdateRoutine_dashboard();
@@ -937,5 +942,25 @@ IFX_INLINE void RVC_updateSharedVariable(void)
 			IfxCpu_releaseMutex(&DashBoard_public.shared.mutex);
 		}
 		updateErrorCount_dashboard = 0;
+	}
+
+	if(IfxCpu_acquireMutex(&mech_msg_public.shared.mutex))	//Do not wait
+	{
+		VariableUpdateRoutine_mech_msg();
+		IfxCpu_releaseMutex(&mech_msg_public.shared.mutex);
+		updateErrorCount_mech_msg = 0;
+	}
+	else if(updateErrorCount_mech_msg < VAR_UPDATE_ERROR_LIM)
+	{
+		updateErrorCount_mech_msg++;
+	}
+	else
+	{
+		while(IfxCpu_acquireMutex(&mech_msg_public.shared.mutex));
+		{
+			VariableUpdateRoutine_mech_msg();
+			IfxCpu_releaseMutex(&mech_msg_public.shared.mutex);
+		}
+		updateErrorCount_mech_msg = 0;
 	}
 }

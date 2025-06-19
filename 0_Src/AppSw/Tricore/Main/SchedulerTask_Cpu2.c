@@ -14,6 +14,7 @@
 #include "OrionBms2.h"
 #include "AdcSensor.h"
 #include "PedalBox.h"
+#include "MechMsg.h"
 /******************************************************************************/
 /*-----------------------------------Macros-----------------------------------*/
 /******************************************************************************/
@@ -85,6 +86,7 @@ void Task_core2_1ms(void)
 	stm_buf_c2 = IfxStm_get(&MODULE_STM0);
 
 //	SDP_SteeringAngleAdc_run();
+	CanCommunication_reInit();
 
 	AmkInverter_can_Run();
 
@@ -154,6 +156,7 @@ void Task_core2_1ms(void)
 IFX_STATIC void Task_core2_10ms_slot0(void)
 {
 	SDP_DashBoardCan_run_10ms();
+	SDP_MechMsg_run_10ms();
 	// SteeringWheel_run_xms_c2();
 	/*
 	FIXME:
