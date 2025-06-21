@@ -912,7 +912,7 @@ IFX_INLINE void VariableUpdateRoutine_dashboard(void)
 
 IFX_INLINE void VariableUpdateRoutine_mech_msg(void)
 {
-	mech_msg_public.shared.data.steering_angel = (sint16)(SDP_SteeringAngleAdc.sta.degree*100);
+	mech_msg_public.shared.data.steering_angle = (sint16)(SDP_SteeringAngleAdc.sta.degree*100);
 	mech_msg_public.shared.data.apps = (uint8)SDP_PedalBox.apps.pps;
 	mech_msg_public.shared.data.bpps = (uint8)SDP_PedalBox.bpps.pps;
 	mech_msg_public.shared.data.brake_pressure_0 = (uint16)RVC.BrakePressure1.value * 10;

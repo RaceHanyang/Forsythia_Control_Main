@@ -42,7 +42,7 @@ void SDP_MechMsg_run_10ms(void)
 		mech_msg_public.data = mech_msg_public.shared.data;
 		IfxCpu_releaseMutex(&mech_msg_public.shared.mutex);
 	}
-	mech_msg.steering_and_pedal.s.steering_angel = mech_msg_public.data.steering_angel;
+	mech_msg.steering_and_pedal.s.steering_angle = mech_msg_public.data.steering_angle;
 	mech_msg.steering_and_pedal.s.apps = mech_msg_public.data.apps;
 	mech_msg.steering_and_pedal.s.bpps = mech_msg_public.data.bpps;
 	mech_msg.steering_and_pedal.s.brake_pressure_0 = mech_msg_public.data.brake_pressure_0;
