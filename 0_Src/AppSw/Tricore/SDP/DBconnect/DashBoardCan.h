@@ -26,7 +26,7 @@ typedef union
 	uint32 data[2];				//[0-31][32-63]
 	struct 
 	{
-		boolean 		vcu_ok                	:1;  // [0]
+		boolean 		tsal_on                	:1;  // [0]
         boolean 		bms_ok                 	:1;  // [1]
         boolean 		imd_ok                 	:1;  // [2]
         boolean 		bspd_ok                	:1;  // [3]
