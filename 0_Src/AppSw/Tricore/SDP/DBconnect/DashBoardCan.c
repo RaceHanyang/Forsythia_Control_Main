@@ -183,7 +183,7 @@ void SDP_DashBoardCan_run_10ms(void)
 
 	/*Dash Board Info TX*/
 	//	DashBoard_canMsg0.B.AmkState 	= (uint8)AmkState;
-	// 	DashBoard_canMsg0.B.vcu_ok 		= DashBoard_public.data.vcuOk;
+	DashBoard_canMsg0.B.tsal_on 	= DashBoard_public.data.tsalOn;
 	DashBoard_canMsg0.B.bms_ok 		= DashBoard_public.data.bmsOk;
 	DashBoard_canMsg0.B.imd_ok 		= DashBoard_public.data.imdOk;
 	DashBoard_canMsg0.B.bspd_ok 	= DashBoard_public.data.bspdOk;
