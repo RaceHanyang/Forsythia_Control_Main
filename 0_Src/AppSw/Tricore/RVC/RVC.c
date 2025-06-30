@@ -76,9 +76,6 @@ TODO:
 #define PEDAL_BRAKE_ON_THRESHOLD 10
 #define REGEN_MUL	1	//2
 
-#define POWER_LIM				80000	//80kW
-#define CURRENT_LIM_SET_VAL		10		//10A
-
 #define TV1PGAIN 0.001
 
 #define REGEN_ON_INIT	FALSE	//***** Regen is not abailable now!!! ***** //FIXME //TODO: Regen limit
@@ -127,9 +124,6 @@ RVC_t RVC =
 	.calibration.leftDec.offset = 0,
 	.calibration.rightDec.mul = 1,
 	.calibration.rightDec.offset = 0,
-
-	.power.limit = POWER_LIM,
-	.currentLimit.setValue = CURRENT_LIM_SET_VAL,
 };
 
 RVC_public_t RVC_public;

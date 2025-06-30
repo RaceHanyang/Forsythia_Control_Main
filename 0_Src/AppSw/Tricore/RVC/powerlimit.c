@@ -1,15 +1,18 @@
 #include "powerlimit.h"
 #include "RVC.h"
 
-#define POWER_LIMIT (80000-1000) //Unit : Watt
-#define Kt 0.26 //Torque Constant. Current * Kt = Torque
+#define POWER_LIMIT             (80000-10000)   //80-1 = 79kW (1KW Margin)
+#define CURRENT_LIM_SET_VAL		10		        //10A
+#define Kt                      0.26            //Torque Constant. Current * Kt = Torque
 
-#define Kp 1 //Proportional term Gain
-#define Ki 1 //Integral term Gain
-#define Kd 1 //Derivative term Gain
+#define Kp 1     //Proportional term Gain
+#define Ki 1     //Integral term Gain
+#define Kd 1     //Derivative term Gain
 #define dt 0.001 // Unit : sec, Same as Period of PID control
 
-RVC.power.limit = POWER_LIMIT;
+POWERLIMIT_t POWERLIMIT;
+
+POWERLIMIT.power_limit = POWER_LIMIT;
 
 void PowerComputation(void);
 void TorqueLimit(void);
@@ -17,8 +20,8 @@ void PIDComputation(void);
 
 IFX_STATIC void PowerComputation(void)
 {
-	RVC.power.value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
-	RVC.power.currentLimit = RVC.power.limit / RVC_public.bms.data.voltage;
+	POWERLIMIT.power_value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
+	POWERLIMIT.current_imit = RVC.power.limit / RVC_public.bms.data.voltage;
 }
 
 IFX_STATIC float PIDComputation(float error)
@@ -29,9 +32,9 @@ IFX_STATIC float PIDComputation(float error)
 
     integral = integral + (error * dt);
     
-    derivative = (error - pid->prev_error) / dt;
+    derivative = (error - prev_error) / dt;
 
-    pid->prev_error = error;
+    prev_error = error;
 
     float output = (Kp * error) + (Ki * integral) + (Kd * derivative);
 
@@ -43,7 +46,7 @@ IFX_STATIC void TorqueLimit(void)
     float power_over;
     if(RVC.power.value <= POWER_LIMIT)
     {
-        power_over = 0
+        power_over = 0;
     }
     else if(RVC.power.value > POWER_LIMIT)
     {
@@ -66,3 +69,4 @@ void POWERLIMIT_run_1ms(void)
     void PowerComputation();
     void TorqueLimit();
 }
+
