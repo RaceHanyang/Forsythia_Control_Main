@@ -10,58 +10,18 @@
 #define Kd 1     //Derivative term Gain
 #define dt 0.001 // Unit : sec, Same as Period of PID control
 
-POWERLIMIT_t POWERLIMIT;
+power_limit_t power_limit;
+extern RVC_t RVC;
 
-POWERLIMIT.power_limit = POWER_LIMIT;
+void PowerLimit_init(void);
+void POWERLIMIT_run_1ms(void);
+IFX_STATIC void PowerComputation(void);
+IFX_STATIC void TorqueLimit(void);
+IFX_STATIC float PIDComputation(float);
 
-void PowerComputation(void);
-void TorqueLimit(void);
-void PIDComputation(void);
 
-IFX_STATIC void PowerComputation(void)
-{
-	POWERLIMIT.power_value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
-	POWERLIMIT.current_imit = RVC.power.limit / RVC_public.bms.data.voltage;
-}
-
-IFX_STATIC float PIDComputation(float error)
-{
-    float integral;
-    float derivative;
-    float prev_error;
-
-    integral = integral + (error * dt);
-    
-    derivative = (error - prev_error) / dt;
-
-    prev_error = error;
-
-    float output = (Kp * error) + (Ki * integral) + (Kd * derivative);
-
-    return output;
-}
-
-IFX_STATIC void TorqueLimit(void)
-{
-    float power_over;
-    if(RVC.power.value <= POWER_LIMIT)
-    {
-        power_over = 0;
-    }
-    else if(RVC.power.value > POWER_LIMIT)
-    {
-        power_over = (RVC.power.value - POWER_LIMIT);
-    }
-    
-    float current_over;
-    current_over = power_over/RVC_public.bms.data.voltage; 
-
-    float torque_over;
-    torque_over = Kt * current_over;
-
-    float torque_error = PID_computation(torque_over);
-
-    RVC.torque.controlled = RVC.torque.controlled - torque_error;
+void PowerLimit_init(void) {
+    power_limit.power_limit = POWER_LIMIT;
 }
 
 void POWERLIMIT_run_1ms(void)
@@ -69,4 +29,47 @@ void POWERLIMIT_run_1ms(void)
     void PowerComputation();
     void TorqueLimit();
 }
+
+IFX_STATIC void PowerComputation(void)
+{
+	power_limit.power_value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
+	power_limit.current_limit = RVC.power.limit / RVC_public.bms.data.voltage;
+}
+
+IFX_STATIC float PIDComputation(float error)
+{
+    power_limit.PID.integral += (error * dt);
+    
+    power_limit.PID.derivative = (error - (power_limit.PID.prev_error)) / dt;
+
+    power_limit.PID.prev_error = error;
+
+    power_limit.PID.output = (Kp * error) + (Ki * (power_limit.PID.integral)) + (Kd * (power_limit.PID.derivative));
+
+    return power_limit.PID.output;
+}
+
+IFX_STATIC void TorqueLimit(void)
+{
+    if(power_limit.power_value <= POWER_LIMIT)
+    {
+        power_limit.power_over = 0;
+    }
+    else if(power_limit.power_value > POWER_LIMIT)
+    {
+        power_limit.power_over = ((power_limit.power_value) - POWER_LIMIT);
+    }
+    
+    power_limit.current_over = (power_limit.power_over)/(RVC_public.bms.data.voltage); 
+
+    power_limit.torque_over = Kt * (power_limit.current_over);
+
+    power_limit.torque_error = PIDComputation(power_limit.torque_over);
+
+    RVC.torque.controlled = (RVC.torque.controlled) - (power_limit.torque_error);
+}
+
+
+
+
 
