@@ -176,6 +176,7 @@ void Task_init (void)
       SDP_DashBoardCan_init();
       SDP_Accumulator_init();
       SDP_MechMsg_init();
+      SDP_SteeringWheelCan_init();
    }
    /* Hmm... */
    {
@@ -288,6 +289,8 @@ void Task_100ms (void)
 {
    Task_counter_service_100ms();
    // SDP_Cooling_Switch();
+   SDP_SteeringWheel_run_100ms();
+
 
    if(Task.counter_100ms%2 == 0)
    {
@@ -320,7 +323,7 @@ void Task_100ms_slot44(void)
 }
 void Task_100ms_slot5(void)
 {
-
+   
 }
 /**********************************************************************/
 /********************************1000ms********************************/
