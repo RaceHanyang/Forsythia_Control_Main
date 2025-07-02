@@ -20,8 +20,11 @@
 #define R_MAX_STA	90.0f
 #define R_MIN_STA	10.0f
 
-#define F_R	0.8f
-#define R_R 0.8f
+#define LEFT_R 1.0f
+#define RIGHT_R 1.0f
+
+#define FRONT_R	0.8f
+#define REAR_R 0.8f
 
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;
@@ -52,10 +55,10 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 		if (L_MIN_STA <= RVC.tv.sta && RVC.tv.sta <= L_MAX_STA)	ratio = (RVC.tv.sta - L_MIN_STA) / (L_MAX_STA - L_MIN_STA);
 		if (-R_MAX_STA <= RVC.tv.sta && RVC.tv.sta <= -R_MIN_STA)	ratio = (RVC.tv.sta + R_MIN_STA) / (R_MAX_STA - R_MIN_STA);
 
-		RVC.torque.frontLeft = FD * RVC.torque.controlled * (1 - ratio * F_R);
-		RVC.torque.frontRight = FD * RVC.torque.controlled * (1 + ratio * F_R);
-		RVC.torque.rearLeft = RVC.torque.controlled * (1 - ratio * R_R);
-		RVC.torque.rearRight = RVC.torque.controlled * (1 + ratio * R_R);
+		RVC.torque.frontLeft = FD * RVC.torque.controlled * (1 - ratio * FRONT_R * LEFT_R);
+		RVC.torque.frontRight = FD * RVC.torque.controlled * (1 + ratio * FRONT_R * RIGHT_R);
+		RVC.torque.rearLeft = RVC.torque.controlled * (1 - ratio * REAR_R * LEFT_R);
+		RVC.torque.rearRight = RVC.torque.controlled * (1 + ratio * REAR_R * RIGHT_R);
 
 		if (RVC.torque.frontLeft < 0)	RVC.torque.frontLeft = 0;
 		if (RVC.torque.frontRight < 0)	RVC.torque.frontRight = 0;
