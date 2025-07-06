@@ -152,6 +152,7 @@ void Task_init (void)
    /*HLD_AbstractionLayer initialization*/
    {
       HLD_Imu_init();
+      New_IMU_CAN_init();
    }
    /*HLD_Userinterface initialization*/
    {
@@ -262,6 +263,8 @@ void Task_10ms (void)         //Slot 0
    Task_counter_service_10ms();
 
    RVC_run_10ms();
+
+   New_IMU_run_10ms();
 
    // HLD_UserInterface_run_10ms();
 
