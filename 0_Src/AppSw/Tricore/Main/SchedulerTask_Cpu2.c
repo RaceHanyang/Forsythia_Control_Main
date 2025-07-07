@@ -92,6 +92,8 @@ void Task_core2_1ms(void)
 	AmkInverter_can_Run();
 
 	OrionBms2_run_1ms_c2();
+
+	New_IMU_run_1ms();
 	
 	task2_10ms_counter+=1;
 	
@@ -156,7 +158,6 @@ void Task_core2_1ms(void)
 
 IFX_STATIC void Task_core2_10ms_slot0(void)
 {
-	New_IMU_run_10ms();
 	SDP_DashBoardCan_run_10ms();
 	SDP_MechMsg_run_10ms();
 	// SteeringWheel_run_xms_c2();

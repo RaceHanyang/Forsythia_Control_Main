@@ -153,7 +153,6 @@ void Task_init (void)
    /*HLD_AbstractionLayer initialization*/
    {
       HLD_Imu_init();
-      New_IMU_CAN_init();
    }
    /*HLD_Userinterface initialization*/
    {
@@ -184,6 +183,7 @@ void Task_init (void)
       AmkInverter_can_init();
       OrionBms2_init();
       RVC_init();
+      New_IMU_CAN_init();
    }
 
    /*HLD initialization finished*/

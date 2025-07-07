@@ -15,7 +15,7 @@ typedef union
 	uint32 data[2];
 	struct
 	{
-		uint8  year;    //unit: year
+	uint8  year;    //unit: year
         uint8  month;   //unit: month   
         uint8  day;     //unit: day
         uint8  hour;    //unit: hour
@@ -30,7 +30,7 @@ typedef union
 	uint32 data[2];
 	struct
 	{
-		uint8  error_code;
+	uint8  error_code;
         uint8  reserved_0;
         uint16 reserved_1;
         uint16 reserved_2;
