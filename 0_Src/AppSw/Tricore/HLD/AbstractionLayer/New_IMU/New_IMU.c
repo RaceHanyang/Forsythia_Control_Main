@@ -36,7 +36,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.imu_err_msg, &config);
 	}
 	{
@@ -45,7 +45,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.imu_status_msg, &config);
 	}
 	{
@@ -63,7 +63,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.acc_msg, &config);
 	}
 	{
@@ -72,7 +72,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.velocity_msg, &config);
 	}
 	{
@@ -81,7 +81,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.euler_angle_msg, &config);
 	}
 	{
@@ -90,7 +90,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.gyr_msg, &config);
 	}
 	{
@@ -99,7 +99,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.coordi_msg, &config);
 	}
 	{
@@ -108,7 +108,7 @@ void New_IMU_CAN_init(void)
 		config.frameType = IfxMultican_Frame_receive;
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
-		config.isStandardId = FALSE;
+		config.isStandardId = TRUE;
 		CanCommunication_initMessage(&new_IMU.altitude_msg, &config);
 	}
 }

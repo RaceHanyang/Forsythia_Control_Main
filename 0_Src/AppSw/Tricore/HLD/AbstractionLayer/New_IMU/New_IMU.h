@@ -152,4 +152,11 @@ typedef struct
     CanCommunication_Message coordi_msg;
     CanCommunication_Message altitude_msg;
 }new_IMU_t;
+
+IFX_EXTERN new_IMU_t new_IMU;
+
+IFX_EXTERN void New_IMU_CAN_init(void);
+IFX_EXTERN void New_IMU_run_10ms(void);
+
 #endif
+

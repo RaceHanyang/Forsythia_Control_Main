@@ -19,6 +19,7 @@
 #include "AmkInverter_can.h"
 #include "OrionBms2.h"
 #include "DashBoardCan.h"
+#include "New_IMU.h"
 
 #include "SharedPinFix.h"
 #include "AdcForceStart.h"
