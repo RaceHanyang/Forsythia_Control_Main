@@ -155,6 +155,7 @@ void Task_core2_1ms(void)
 
 IFX_STATIC void Task_core2_10ms_slot0(void)
 {
+	New_IMU_run_10ms();
 	SDP_DashBoardCan_run_10ms();
 	SDP_MechMsg_run_10ms();
 	// SteeringWheel_run_xms_c2();
