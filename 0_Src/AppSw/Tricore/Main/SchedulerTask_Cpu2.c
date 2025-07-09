@@ -15,7 +15,7 @@
 #include "AdcSensor.h"
 #include "PedalBox.h"
 #include "MechMsg.h"
-#include "New_IMU.h"
+#include "IMU.h"
 /******************************************************************************/
 /*-----------------------------------Macros-----------------------------------*/
 /******************************************************************************/
@@ -93,7 +93,7 @@ void Task_core2_1ms(void)
 
 	OrionBms2_run_1ms_c2();
 
-	New_IMU_run_1ms();
+	IMU_run_1ms();
 	
 	task2_10ms_counter+=1;
 	

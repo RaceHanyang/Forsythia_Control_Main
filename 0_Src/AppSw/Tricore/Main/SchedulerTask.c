@@ -19,7 +19,7 @@
 #include "AmkInverter_can.h"
 #include "OrionBms2.h"
 #include "DashBoardCan.h"
-#include "New_IMU.h"
+#include "IMU.h"
 
 #include "SharedPinFix.h"
 #include "AdcForceStart.h"
@@ -183,7 +183,7 @@ void Task_init (void)
       AmkInverter_can_init();
       OrionBms2_init();
       RVC_init();
-      New_IMU_CAN_init();
+      IMU_CAN_init();
    }
 
    /*HLD initialization finished*/
