@@ -41,7 +41,7 @@ void CanCommunication_init(void)
 	IfxMultican_Can_NodeConfig canNodeConfig;
 	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
 
-	canNodeConfig.baudrate 	= 1000000;		//1Mbps
+	canNodeConfig.baudrate 	= 500000;		//500kbps
 	canNodeConfig.nodeId	= IfxMultican_NodeId_0;
 	canNodeConfig.rxPin		= &CAN0NODE0IN;
 	canNodeConfig.rxPinMode	= IfxPort_InputMode_pullUp;
@@ -80,7 +80,7 @@ void CanCommunication_reInit(void)
 	IfxMultican_Can_NodeConfig canNodeConfig;
 	IfxMultican_Can_Node_initConfig(&canNodeConfig, &CanCommunication_canModule);
 
-	canNodeConfig.baudrate 	= 1000000;		//1Mbps
+	canNodeConfig.baudrate 	= 500000;		//500kbps
 	canNodeConfig.nodeId	= IfxMultican_NodeId_0;
 	canNodeConfig.rxPin		= &CAN0NODE0IN;
 	canNodeConfig.rxPinMode	= IfxPort_InputMode_pullUp;
