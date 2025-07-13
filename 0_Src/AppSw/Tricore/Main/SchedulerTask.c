@@ -182,8 +182,8 @@ void Task_init (void)
    {
       AmkInverter_can_init();
       OrionBms2_init();
-      RVC_init();
       IMU_CAN_init();
+      RVC_init();
    }
 
    /*HLD initialization finished*/

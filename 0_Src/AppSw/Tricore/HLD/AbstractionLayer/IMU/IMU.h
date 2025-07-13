@@ -1,6 +1,8 @@
 #ifndef SRC_APPSW_TRICORE_HLD_IMU_IMU_H_
 #define SRC_APPSW_TRICORE_HLD_IMU_IMU_H_
 
+#include <stdbool.h>
+
 #include <Ifx_Types.h>
 #include "Configuration.h"
 #include "ConfigurationIsr.h"
@@ -26,9 +28,9 @@ typedef union
 	uint32 data[2];
 	struct
 	{
-        uint16 gry_x;    //unit: 2^{-9}rad/s
-        uint16 gry_y;    //unit: 2^{-9}rad/s
-        uint16 gry_z;    //unit: 2^{-9}rad/s
+        uint16 gyr_x;    //unit: 2^{-9}rad/s
+        uint16 gyr_y;    //unit: 2^{-9}rad/s
+        uint16 gyr_z;    //unit: 2^{-9}rad/s
         uint16 reserved_0;
 	} s;
 }gyr_t;
@@ -43,7 +45,7 @@ typedef struct
         float gyr_x_value; //unit: rad/s
         float gyr_y_value; //unit: rad/s
         float gyr_z_value; //unit: rad/s
-}IMU_value_t
+}IMU_value_t;
 
 
 typedef struct 
@@ -55,7 +57,7 @@ typedef struct
 
     CanCommunication_Message free_acc_msg;
     CanCommunication_Message gyr_msg;
-}nIMU_t;
+}IMU_t;
 
 IFX_EXTERN IMU_t IMU;
 
