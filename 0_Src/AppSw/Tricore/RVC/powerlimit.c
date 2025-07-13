@@ -73,3 +73,27 @@ IFX_STATIC void TorqueLimit(void)
 
 
 
+
+
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define V_epsilon  0.001  //1ms
+#define F_max 2143        //1cN/M
+
+float F_lim;
+float alpha_ff;
+
+float CalculateFeedForward(float Velocity);
+float CalculateFeedBack(void);
+
+float CalculateFeedForward(V_x)
+{
+    F_lim = (POWER_LIMIT)/(MAX(V_x, V_epsilon));
+    alpha_ff = MIN((4*F_max),F_lim)/(4*F_max);
+    return alpha_ff;
+}
+
+
+
+
+
