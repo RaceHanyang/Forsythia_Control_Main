@@ -152,7 +152,7 @@ void Task_init (void)
    }
    /*HLD_AbstractionLayer initialization*/
    {
-      HLD_Imu_init();
+
    }
    /*HLD_Userinterface initialization*/
    {

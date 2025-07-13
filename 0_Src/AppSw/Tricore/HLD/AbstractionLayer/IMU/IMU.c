@@ -1,5 +1,5 @@
 #include <IMU.h>
-
+#include <stdbool.h>
 
 #define freeAccId     0x320
 #define gyrId         0x420
@@ -23,7 +23,7 @@ void IMU_CAN_init(void)
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
-		CanCommunication_initMessage(&new_IMU.free_acc_msg, &config);
+		CanCommunication_initMessage(&IMU.free_acc_msg, &config);
 	}
 	{
 		CanCommunication_Message_Config config;
@@ -32,7 +32,7 @@ void IMU_CAN_init(void)
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
-		CanCommunication_initMessage(&new_IMU.gyr_msg, &config);
+		CanCommunication_initMessage(&IMU.gyr_msg, &config);
 	}
 }
 
@@ -43,7 +43,7 @@ void IMU_run_1ms(void)
 
 IFX_STATIC void IMU_receiveMessage(void)
 {
-    if (CanCommunication_receiveMessage(&new_IMU.free_acc_msg))
+    if (CanCommunication_receiveMessage(&IMU.free_acc_msg))
 	{
 		Change_Bigendian_to_Littleendian(IMU.free_acc_msg.msg.data,IMU.free_acc.data);
 		//unit conversion
@@ -52,7 +52,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 		IMU.IMU_value.free_acc_z_value = IMU.free_acc.s.free_acc_z/(256.0f);
 	}
 
-    if (CanCommunication_receiveMessage(&new_IMU.gyr_msg))
+    if (CanCommunication_receiveMessage(&IMU.gyr_msg))
 	{
 		Change_Bigendian_to_Littleendian(IMU.gyr_msg.msg.data,IMU.gyr.data);
 		//unit conversion
@@ -62,7 +62,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 	}
 }
 
-IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 target_data[2])
+IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 output_data[2])
 {
 	typedef union 
 	{
@@ -84,7 +84,7 @@ IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 targ
 
 	big_end_t 		  big_end;
 	little_end_t 	  little_end;
-	bool temp[64] = {0};
+	boolean temp[64] = {0};
 
 	big_end.s.msg_data[0] = msg_data[0];
 	big_end.s.msg_data[1] = msg_data[1];
@@ -98,6 +98,6 @@ IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 targ
 		little_end.little_end_data |= (temp[i] << (63-i));
 	}
 
-	target_data[0] = little_end.s.value_data[0];
-	target_data[1] = little_end.s.value_data[1];
+	output_data[0] = little_end.s.value_data[0];
+	output_data[1] = little_end.s.value_data[1];
 }
