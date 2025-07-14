@@ -45,7 +45,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 {
     if (CanCommunication_receiveMessage(&IMU.free_acc_msg))
 	{
-		Change_Bigendian_to_Littleendian(&IMU.free_acc_msg.msg.data,&IMU.free_acc.data);
+		Change_Bigendian_to_Littleendian(IMU.free_acc_msg.msg.data,IMU.free_acc.data);
 		//unit conversion
 		IMU.IMU_value.free_acc_x_value = IMU.free_acc.s.free_acc_x/(256.0f); 
 		IMU.IMU_value.free_acc_y_value = IMU.free_acc.s.free_acc_y/(256.0f);
@@ -54,7 +54,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 
     if (CanCommunication_receiveMessage(&IMU.gyr_msg))
 	{
-		Change_Bigendian_to_Littleendian(&IMU.gyr_msg.msg.data,&IMU.gyr.data);
+		Change_Bigendian_to_Littleendian(IMU.gyr_msg.msg.data,IMU.gyr.data);
 		//unit conversion
 		IMU.IMU_value.gyr_x_value = IMU.gyr.s.gyr_x/(512.0f);
 		IMU.IMU_value.gyr_y_value = IMU.gyr.s.gyr_y/(512.0f);
@@ -62,7 +62,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 	}
 }
 
-IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 input[2], uint32 output[2])
+IFX_STATIC void Change_Bigendian_to_Littleendian(uint32* input, uint32* output)
 {
 	typedef union
 	{
