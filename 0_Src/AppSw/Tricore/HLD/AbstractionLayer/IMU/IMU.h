@@ -53,7 +53,7 @@ typedef struct
     free_acc_t      free_acc;
     gyr_t           gyr;
 
-    IMU_value_t IMU_value;
+    IMU_value_t     IMU_value;
 
     CanCommunication_Message free_acc_msg;
     CanCommunication_Message gyr_msg;

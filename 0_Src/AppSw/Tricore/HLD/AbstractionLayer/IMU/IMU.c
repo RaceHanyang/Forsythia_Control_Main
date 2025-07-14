@@ -11,7 +11,7 @@ IMU_t IMU;
 void IMU_CAN_init(void);
 void IMU_run_1ms(void);
 IFX_STATIC void IMU_receiveMessage(void);
-IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 target_data[2]);
+IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 input[2], uint32 output[2]);
 
 /********************* Function Implementation ***********************/
 void IMU_CAN_init(void)
@@ -45,7 +45,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 {
     if (CanCommunication_receiveMessage(&new_IMU.free_acc_msg))
 	{
-		Change_Bigendian_to_Littleendian(IMU.free_acc_msg.msg.data,IMU.free_acc.data);
+		Change_Bigendian_to_Littleendian(&IMU.free_acc_msg.msg.data,&IMU.free_acc.data);
 		//unit conversion
 		IMU.IMU_value.free_acc_x_value = IMU.free_acc.s.free_acc_x/(256.0f); 
 		IMU.IMU_value.free_acc_y_value = IMU.free_acc.s.free_acc_y/(256.0f);
@@ -54,7 +54,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 
     if (CanCommunication_receiveMessage(&new_IMU.gyr_msg))
 	{
-		Change_Bigendian_to_Littleendian(IMU.gyr_msg.msg.data,IMU.gyr.data);
+		Change_Bigendian_to_Littleendian(&IMU.gyr_msg.msg.data,&IMU.gyr.data);
 		//unit conversion
 		IMU.IMU_value.gyr_x_value = IMU.gyr.s.gyr_x/(512.0f);
 		IMU.IMU_value.gyr_y_value = IMU.gyr.s.gyr_y/(512.0f);
@@ -62,42 +62,31 @@ IFX_STATIC void IMU_receiveMessage(void)
 	}
 }
 
-IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 msg_data[2], uint32 target_data[2])
+IFX_STATIC void Change_Bigendian_to_Littleendian(uint32 input[2], uint32 output[2])
 {
-	typedef union 
+	typedef union
 	{
-		uint64 big_end_data;
-		struct 
-		{
-			uint32 msg_data[2];
-		} s;
-	} big_end_t;
+		uint32 data[2];
+		uint8 input_temp[8]; 
+	}input_to_temp_t; //Divied into 1Byte
 
 	typedef union 
 	{
-		uint64 little_end_data;
-		struct 
-		{
-			uint32 value_data[2];
-		} s;
-	} little_end_t;
+		uint32 data[2];
+		uint8 output_temp[8];
+	}temp_to_output_t; 
 
-	big_end_t 		  big_end;
-	little_end_t 	  little_end;
-	bool temp[64] = {0};
+	input_to_temp_t  input_to_temp;
+	temp_to_output_t temp_to_output;
 
-	big_end.s.msg_data[0] = msg_data[0];
-	big_end.s.msg_data[1] = msg_data[1];
+	input_to_temp.data[0] = input[0];
+	input_to_temp.data[1] = input[1];
 
-	for(int i = 0; i < 64; i++)
+	for(int i = 0; i<8; i++)
 	{
-		temp[i] = ((big_end.big_end_data >> i) & 1ULL);
-	}
-	for(int i = 63; i >= 0; i--)
-	{
-		little_end.little_end_data |= (temp[i] << (63-i));
+		temp_to_output.output_temp[7-i] = input_to_temp.input_temp[i];  
 	}
 
-	target_data[0] = little_end.s.value_data[0];
-	target_data[1] = little_end.s.value_data[1];
+	output[0] = temp_to_output.data[0];
+	output[1] = temp_to_output.data[1];
 }
