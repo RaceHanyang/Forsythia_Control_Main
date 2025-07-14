@@ -23,7 +23,7 @@ void IMU_CAN_init(void)
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
-		CanCommunication_initMessage(&new_IMU.free_acc_msg, &config);
+		CanCommunication_initMessage(&IMU.free_acc_msg, &config);
 	}
 	{
 		CanCommunication_Message_Config config;
@@ -32,7 +32,7 @@ void IMU_CAN_init(void)
 		config.dataLen = IfxMultican_DataLengthCode_8;
 		config.node = &CanCommunication_canNode0;
 		config.isStandardId = TRUE;
-		CanCommunication_initMessage(&new_IMU.gyr_msg, &config);
+		CanCommunication_initMessage(&IMU.gyr_msg, &config);
 	}
 }
 
@@ -43,7 +43,7 @@ void IMU_run_1ms(void)
 
 IFX_STATIC void IMU_receiveMessage(void)
 {
-    if (CanCommunication_receiveMessage(&new_IMU.free_acc_msg))
+    if (CanCommunication_receiveMessage(&IMU.free_acc_msg))
 	{
 		Change_Bigendian_to_Littleendian(&IMU.free_acc_msg.msg.data,&IMU.free_acc.data);
 		//unit conversion
@@ -52,7 +52,7 @@ IFX_STATIC void IMU_receiveMessage(void)
 		IMU.IMU_value.free_acc_z_value = IMU.free_acc.s.free_acc_z/(256.0f);
 	}
 
-    if (CanCommunication_receiveMessage(&new_IMU.gyr_msg))
+    if (CanCommunication_receiveMessage(&IMU.gyr_msg))
 	{
 		Change_Bigendian_to_Littleendian(&IMU.gyr_msg.msg.data,&IMU.gyr.data);
 		//unit conversion
