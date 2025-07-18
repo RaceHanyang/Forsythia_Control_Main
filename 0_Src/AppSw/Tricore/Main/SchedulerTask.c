@@ -19,6 +19,7 @@
 #include "AmkInverter_can.h"
 #include "OrionBms2.h"
 #include "DashBoardCan.h"
+#include "IMU.h"
 
 #include "SharedPinFix.h"
 #include "AdcForceStart.h"
@@ -151,7 +152,7 @@ void Task_init (void)
    }
    /*HLD_AbstractionLayer initialization*/
    {
-      HLD_Imu_init();
+
    }
    /*HLD_Userinterface initialization*/
    {
@@ -181,6 +182,7 @@ void Task_init (void)
    {
       AmkInverter_can_init();
       OrionBms2_init();
+      IMU_CAN_init();
       RVC_init();
    }
 
@@ -262,6 +264,8 @@ void Task_10ms (void)         //Slot 0
    Task_counter_service_10ms();
 
    RVC_run_10ms();
+
+   
 
    // HLD_UserInterface_run_10ms();
 
