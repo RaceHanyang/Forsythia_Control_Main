@@ -247,7 +247,7 @@ void Task_IsrCb_1ms (void)
    }
    {
       RVC_run_1ms();
-      POWERLIMIT_run_1ms();
+      PowerLimit_run_1ms();
       SDP_MechMsg_run_1000ms();
    }
    HLD_GtmTomBeeper_run_1ms();

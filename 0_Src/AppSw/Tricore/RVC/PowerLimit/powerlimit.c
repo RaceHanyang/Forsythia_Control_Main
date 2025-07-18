@@ -3,7 +3,7 @@
 //* Defines *//
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define CLAMP (min, max, value) (MAX(min,(MIN(value, max))))
+#define CLAMP(min, max, value) (MAX(min,(MIN(value, max))))
 
 #define POWER_LIMIT             (80000-10000)   //80-1 = 79kW       (1KW Margin)
 #define V_epsilon               0.001           //1M/s
@@ -18,19 +18,25 @@ power_limit_t power_limit;
 
 
 //* Function implementations *//
-void CalculateAlpha(void);
+void PowerLimit_run_1ms(void);
 
+IFX_STATIC void CalculateAlpha(void);
 IFX_STATIC float CalculateFeedForward(float32 velocity);
 IFX_STATIC float CalculateFeedBack(float32 current, float32 voltage);
 IFX_STATIC float LPF(float32 input);
 
 //* Functions *//
+void PowerLimit_run_1ms(void)
+{
+    CalculateAlpha();
+}
+
 void CalculateAlpha(void)
 {   
     float32 velocity = ((AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FL +
                         AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FR +
                         AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RL +
-                        AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RR) / 4)
+                        AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RR) / 4);
     power_limit.alpha_ff = CalculateFeedForward(velocity);
     power_limit.alpha_fb = CalculateFeedBack(RVC_public.bms.shared.data.current, RVC_public.bms.shared.data.voltage);
     power_limit.alpha = (power_limit.alpha_ff * power_limit.alpha_fb);
