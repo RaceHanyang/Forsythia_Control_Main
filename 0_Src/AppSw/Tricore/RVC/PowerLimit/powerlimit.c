@@ -5,13 +5,13 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define CLAMP(min, max, value) (MAX(min,(MIN(value, max))))
 
-#define POWER_LIMIT             (80000-10000)   //80-1 = 79kW       (1KW Margin)
+#define POWER_LIMIT             (80000-10000)   //80-1 = 79kW        (1KW Margin)
 #define V_epsilon               0.001           //1M/s
 #define F_max                   2143            //10mN/M
 #define K_p                     (1/P_band) 
-#define P_band                  5               //Linear decay range(Uint : kW)     
-#define T_s                     1000            //Sampling Period   (Uint : Hz)
-#define t                       0.05            //Time constant     (Unit : sec)
+#define P_band                  5               //Linear decay range (Uint : kW)     
+#define T_s                     1000            //Sampling Period    (Uint : Hz)
+#define t                       0.05            //Time constant      (Unit : sec)
 
 //* Structures *//
 power_limit_t power_limit;
