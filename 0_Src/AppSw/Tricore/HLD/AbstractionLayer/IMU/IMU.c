@@ -82,11 +82,15 @@ IFX_STATIC void Change_Bigendian_to_Littleendian(uint32* input, uint32* output)
 	input_to_temp.data[0] = input[0];
 	input_to_temp.data[1] = input[1];
 
-	for(int i = 0; i<8; i++)
-	{
-		temp_to_output.output_temp[7-i] = input_to_temp.input_temp[i];  
-	}
-
+	temp_to_output.output_temp[0] = input_to_temp.input_temp[1];
+	temp_to_output.output_temp[1] = input_to_temp.input_temp[0];
+	temp_to_output.output_temp[2] = input_to_temp.input_temp[3];
+	temp_to_output.output_temp[3] = input_to_temp.input_temp[2];
+	temp_to_output.output_temp[4] = input_to_temp.input_temp[5];
+	temp_to_output.output_temp[5] = input_to_temp.input_temp[4];
+	temp_to_output.output_temp[6] = input_to_temp.input_temp[7];
+	temp_to_output.output_temp[7] = input_to_temp.input_temp[6];  
+	
 	output[0] = temp_to_output.data[0];
 	output[1] = temp_to_output.data[1];
 }
