@@ -77,6 +77,7 @@ TODO:
 #define REGEN_MUL	1	//2
 
 #define POWER_LIM				80000	//80kW
+#define POWER_MARGIN 			1000	//1kW
 #define CURRENT_LIM_SET_VAL		10		//10A
 
 #define TV1PGAIN 0.001
@@ -106,6 +107,10 @@ TODO:
 #define BMS_PDL_ERROR	FALSE
 
 #define RTDS_TIME (3000) //RTD Sound length in ms.
+/**************************** Function Macro **********************************/
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define CLAMP(min, max, value) (MAX(min,(MIN(value, max))))
 
 /*********************** Global Variables ****************************/
 static const float32 frontDist_initial = 0.35f;
@@ -147,8 +152,12 @@ IFX_STATIC void RVC_pollGpi(RVC_Gpi_t *gpi);
 IFX_INLINE void RVC_updateReadyToDriveSignal(void);
 IFX_INLINE void RVC_slipComputation(void);
 IFX_INLINE void RVC_getTorqueRequired(void);
-IFX_INLINE void RVC_powerComputation(void);
-IFX_INLINE void RVC_torqueLimit(void);
+IFX_INLINE float CalculateAlpha(void);
+IFX_INLINE float CalculateFeedForward(float32 velocity);
+IFX_INLINE float CalculateFeedBack(float32 current, float32 voltage);
+IFX_INLINE float LPF(float32 input);
+// IFX_INLINE void RVC_powerComputation(void);
+// IFX_INLINE void RVC_torqueLimit(void);
 IFX_INLINE void RVC_torqueSatuation(void);
 IFX_INLINE void RVC_torqueDistrobution(void);
 IFX_INLINE void RVC_torqueSignalGeneration(void);
@@ -212,9 +221,11 @@ void RVC_run_1ms(void)
 
 	/* TODO: Torque limit: Traction control */
 
-	RVC_powerComputation();
+	CalculateAlpha();
 
-	RVC_torqueLimit();
+	//RVC_powerComputation();
+
+	// RVC_torqueLimit();
 
 	RVC_torqueSatuation();
 
@@ -711,32 +722,74 @@ IFX_INLINE void RVC_getTorqueRequired(void)
 #endif
 }
 
-IFX_INLINE void RVC_powerComputation(void)
-{
-	RVC.power.value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
-	RVC.power.currentLimit = RVC.power.limit / RVC_public.bms.data.voltage;
+IFX_INLINE float CalculateAlpha(void);
+{   
+    float32 velocity = ((AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FL +
+                         AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FR +
+                         AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RL +
+                         AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RR) / 4);
+    RVC_public.RVC_alpha.alpha_ff = CalculateFeedForward(velocity);
+    RVC_public.RVC_alpha.alpha_fb = CalculateFeedBack(RVC_public.bms.shared.data.current, RVC_public.bms.shared.data.voltage);
+    RVC_public.RVC_alpha.alpha = (RVC_public.RVC_alpha.alpha_ff * RVC_public.RVC_alpha.alpha_fb);
 }
 
-IFX_INLINE void RVC_torqueLimit(void)
+IFX_INLINE float CalculateFeedForward(float32 velocity)
 {
-	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
+	float32 F_lim = (POWER_LIM-POWER_MARGIN)/(MAX(velocity, RVC_public.RVC_alpha.constants.V_epsilon));
+    float32 alpha_ff = MIN((4*RVC_public.RVC_alpha.constants.F_max),F_lim)/(4*RVC_public.RVC_alpha.constants.F_max); 
 
-	float32 currentLimitByPower = RVC.power.currentLimit;
-
-	RVC.currentLimit.value = (dischargeLimit > currentLimitByPower) ? currentLimitByPower : dischargeLimit;
-
-	RVC.currentLimit.margin = RVC.currentLimit.value - RVC_public.bms.data.current;
-
-	if(RVC.currentLimit.margin < RVC.currentLimit.setValue)
-	{
-		RVC.torque.controlled = RVC.torque.controlled * RVC.currentLimit.margin / RVC.currentLimit.setValue;
-		RVC.currentLimit.isLimited = TRUE;
-	}
-	else
-	{
-		RVC.currentLimit.isLimited = FALSE;
-	}
+    return alpha_ff;
 }
+
+IFX_INLINE float CalculateFeedBack(float32 current, float32 voltage)
+{
+    float32 epsilon_p = ((POWER_LIM-POWER_MARGIN) - (current * voltage));
+    float32 alpha_raw = CLAMP(0,1,(RVC_public.RVC_alpha.constants.K_p*epsilon_p));
+    float32 alpha_fb = LPF(alpha_raw); 
+
+    return alpha_fb;
+}
+
+IFX_INLINE float LPF(float32 input)
+{
+    float32 alpha =(RVC_public.RVC_alpha.constants.t/(RVC_public.RVC_alpha.constants.t + RVC_public.RVC_alpha.constants.T_s));
+    float32 prev_input, output;
+
+    output = (alpha * prev_input) + ((1-alpha) * input);
+
+    prev_input = input;
+
+    return output;
+}
+
+
+// IFX_INLINE void RVC_powerComputation(void)
+// {
+// 	RVC.power.value = RVC_public.bms.data.current * RVC_public.bms.data.voltage;
+// 	RVC.power.currentLimit = RVC.power.limit / RVC_public.bms.data.voltage;
+// }
+
+
+// IFX_INLINE void RVC_torqueLimit(void)
+// {
+// 	uint16 dischargeLimit = RVC_public.bms.data.dischargeLimit;
+
+// 	float32 currentLimitByPower = RVC.power.currentLimit;
+
+// 	RVC.currentLimit.value = (dischargeLimit > currentLimitByPower) ? currentLimitByPower : dischargeLimit;
+
+// 	RVC.currentLimit.margin = RVC.currentLimit.value - RVC_public.bms.data.current;
+
+// 	if(RVC.currentLimit.margin < RVC.currentLimit.setValue)
+// 	{
+// 		RVC.torque.controlled = RVC.torque.controlled * RVC.currentLimit.margin / RVC.currentLimit.setValue;
+// 		RVC.currentLimit.isLimited = TRUE;
+// 	}
+// 	else
+// 	{
+// 		RVC.currentLimit.isLimited = FALSE;
+// 	}
+// }
 
 IFX_INLINE void RVC_torqueSatuation(void)
 {
