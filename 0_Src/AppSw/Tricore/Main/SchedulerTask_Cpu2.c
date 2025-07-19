@@ -124,8 +124,30 @@ void Task_core2_1ms(void)
 		torque_rl /= 5.0f;
 		torque_rr /= 5.0f;
 
-		AmkInverter_writeMessageFront((sint16)torque_fl, (sint16)torque_fr, accelerating);
-		AmkInverter_writeMessageRear((sint16)torque_rl, (sint16)torque_rr, accelerating);
+		sint16 fl = (sint16)torque_fl;
+		sint16 fr = (sint16)torque_fr;
+		sint16 rl = (sint16)torque_rl;
+		sint16 rr = (sint16)torque_rr;
+
+		if (fl > AMK_TORQUE_LIM)
+		{
+			fl = AMK_TORQUE_LIM;
+		}
+		if (fr > AMK_TORQUE_LIM)
+		{
+			fr = AMK_TORQUE_LIM;
+		}
+		if (rl > AMK_TORQUE_LIM)
+		{
+			rl = AMK_TORQUE_LIM;
+		}
+		if (rr > AMK_TORQUE_LIM)
+		{
+			rr = AMK_TORQUE_LIM;
+		}
+
+		AmkInverter_writeMessageFront(fl, fr, accelerating);
+		AmkInverter_writeMessageRear(rl, rr, accelerating);
 
 		torque_fl = 0.0f;
 		torque_fr = 0.0f;
