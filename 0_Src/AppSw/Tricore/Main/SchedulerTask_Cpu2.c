@@ -50,10 +50,10 @@ float32 tpsRr;
 
 boolean brakeOn = FALSE;
 
-sint16 torque_fl;
-sint16 torque_fr;
-sint16 torque_rl;
-sint16 torque_rr;
+float32 torque_fl;
+float32 torque_fr;
+float32 torque_rl;
+float32 torque_rr;
 
 boolean accelerating;
 
@@ -117,20 +117,20 @@ void Task_core2_1ms(void)
 	// AmkInverter_writeMessage2(value,value);
 
 	
-	if(task2_10ms_counter == 10)
+	if(task2_10ms_counter == 5)
 	{
-		torque_fl /= 11;
-		torque_fr /= 11;
-		torque_rl /= 11;
-		torque_rr /= 11;
+		torque_fl /= 5.0f;
+		torque_fr /= 5.0f;
+		torque_rl /= 5.0f;
+		torque_rr /= 5.0f;
 
 		AmkInverter_writeMessageFront((sint16)torque_fl, (sint16)torque_fr, accelerating);
 		AmkInverter_writeMessageRear((sint16)torque_rl, (sint16)torque_rr, accelerating);
 
-		torque_fl = 0;
-		torque_fr = 0;
-		torque_rl = 0;
-		torque_rr = 0;
+		torque_fl = 0.0f;
+		torque_fr = 0.0f;
+		torque_rl = 0.0f;
+		torque_rr = 0.0f;
 	}
 
 	// else if (task2_10ms_counter ==15)

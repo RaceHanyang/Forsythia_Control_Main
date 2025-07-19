@@ -77,6 +77,7 @@ TODO:
 #define REGEN_MUL	1	//2
 
 #define POWER_LIM				80000	//80kW
+#define P_BAND					5000	//5kW
 #define CURRENT_LIM_SET_VAL		10		//10A
 
 #define TV1PGAIN 0.001
@@ -727,15 +728,32 @@ IFX_INLINE void RVC_torqueLimit(void)
 
 	RVC.currentLimit.margin = RVC.currentLimit.value - RVC_public.bms.data.current;
 
-	if(RVC.currentLimit.margin < RVC.currentLimit.setValue)
+	float32 power_limit = RVC_public.bms.data.dischargeLimit * RVC_public.bms.data.voltage;
+	if (power_limit > RVC.power.limit)
 	{
-		RVC.torque.controlled = RVC.torque.controlled * RVC.currentLimit.margin / RVC.currentLimit.setValue;
-		RVC.currentLimit.isLimited = TRUE;
+		power_limit = RVC.power.limit;
 	}
-	else
+
+	float32 alpha = (power_limit - RVC.power.value) / P_BAND;
+	if (alpha < 0)
 	{
-		RVC.currentLimit.isLimited = FALSE;
+		alpha = 0;
 	}
+	if (alpha > 1)
+	{
+		alpha = 1;
+	}
+	RVC.torque.controlled *= alpha;
+
+//	if(RVC.currentLimit.margin < RVC.currentLimit.setValue)
+//	{
+//		RVC.torque.controlled = RVC.torque.controlled * RVC.currentLimit.margin / RVC.currentLimit.setValue;
+//		RVC.currentLimit.isLimited = TRUE;
+//	}
+//	else
+//	{
+//		RVC.currentLimit.isLimited = FALSE;
+//	}
 }
 
 IFX_INLINE void RVC_torqueSatuation(void)
