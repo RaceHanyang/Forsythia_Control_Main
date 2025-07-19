@@ -152,7 +152,7 @@ IFX_STATIC void RVC_pollGpi(RVC_Gpi_t *gpi);
 IFX_INLINE void RVC_updateReadyToDriveSignal(void);
 IFX_INLINE void RVC_slipComputation(void);
 IFX_INLINE void RVC_getTorqueRequired(void);
-IFX_INLINE float CalculateAlpha(float32 velocity, float32 current, float32 voltage);
+IFX_INLINE float CalculateAlpha(void);
 IFX_INLINE float CalculateFeedForward(float32 velocity);
 IFX_INLINE float CalculateFeedBack(float32 current, float32 voltage);
 IFX_INLINE float LPF(float32 input);
@@ -722,7 +722,7 @@ IFX_INLINE void RVC_getTorqueRequired(void)
 #endif
 }
 
-IFX_INLINE float CalculateAlpha(float32 velocity, float32 current, float32 voltage)
+IFX_INLINE float CalculateAlpha(void);
 {   
     float32 velocity = ((AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FL +
                          AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_FR +
@@ -730,7 +730,7 @@ IFX_INLINE float CalculateAlpha(float32 velocity, float32 current, float32 volta
                          AmkInverterMonitorPublic.monitor.MotorVelocity.velocity_RR) / 4);
     RVC_public.RVC_alpha.alpha_ff = CalculateFeedForward(velocity);
     RVC_public.RVC_alpha.alpha_fb = CalculateFeedBack(RVC_public.bms.shared.data.current, RVC_public.bms.shared.data.voltage);
-    RVC_public.RVC_alpha.alpha = (power_limit.alpha_ff * power_limit.alpha_fb);
+    RVC_public.RVC_alpha.alpha = (RVC_public.RVC_alpha.alpha_ff * RVC_public.RVC_alpha.alpha_fb);
 }
 
 IFX_INLINE float CalculateFeedForward(float32 velocity)
@@ -752,7 +752,7 @@ IFX_INLINE float CalculateFeedBack(float32 current, float32 voltage)
 
 IFX_INLINE float LPF(float32 input)
 {
-    float32 alpha =(RVC_public.RVC_alpha.constantst/(RVC_public.RVC_alpha.constantst + RVC_public.RVC_alpha.constantsT_s)); 
+    float32 alpha =(RVC_public.RVC_alpha.constants.t/(RVC_public.RVC_alpha.constants.t + RVC_public.RVC_alpha.constants.T_s));
     float32 prev_input, output;
 
     output = (alpha * prev_input) + ((1-alpha) * input);

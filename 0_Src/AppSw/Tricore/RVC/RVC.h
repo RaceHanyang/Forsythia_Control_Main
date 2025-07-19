@@ -42,8 +42,7 @@ typedef struct
 	{
 		const float32   V_epsilon = (0.001f); 	//Unit : M/s
 		const uint16    F_max = 2143;			//Unit : 10mN/M
-		const uint16    P_band = 5;				//Linear decay range (Uint : kW)
-		const float32	K_p = ((1.0f)/P_band);	//Gain 
+		const float32	K_p = ((1.0f)/5);		//Gain, 1/P_band (P_band : Linear decay range (Uint : kW))
 		const uint16 	T_s	= 1000;				//Sampling Period    (Uint : Hz)
 		const float32   t = (0.05f);			//Time constant      (Unit : sec)
 	} constants;
