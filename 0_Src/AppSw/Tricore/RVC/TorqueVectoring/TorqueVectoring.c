@@ -37,6 +37,8 @@
 #define MAX_STA 90.0f
 #define MIN_STA 10.0f
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;
 
@@ -45,21 +47,18 @@ static inline float32 my_absf(float32 x) {
     return (x < 0.0f) ? -x : x;
 }
 
+static inline float32 clamp(float32 val, float32 min, float32 max) {
+    if (val < min) return min;
+    if (val > max) return max;
+    return val;
+}
+
 void RVC_TorqueVectoring_run_modeOpen(void)
 {
 	float32 front_ratio = F_RATIO;
 	if (FR_ON)
 	{
-		float32 u = RVC.torque.desired / 100.0f;
-
-		if (u < 0.0f)
-		{
-			u = 0.0f;
-		}
-		if (u > 1.0f)
-		{
-			u = 1.0f;
-		}
+		float32 u = clamp(RVC.torque.desired / 100.0f, 0.0f, 1.0f);
       
 		if(u <= X1)
 		{
@@ -81,15 +80,7 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 
 	if (TV_ON)
 	{
-		float32 deg = my_absf(RVC.tv.sta);
-		if (deg < MIN_STA)
-		{
-			deg = MIN_STA;
-		}
-		if (deg > MAX_STA)
-		{
-			deg = MAX_STA;
-		}
+		float32 deg = clamp(my_absf(RVC.tv.sta), MIN_STA, MAX_STA);
 		float32 ratio = (deg - MIN_STA) / (MAX_STA - MIN_STA);
 		float32 fl_ratio = LR_DEFAULT_RATIO;
 		float32 fr_ratio = LR_DEFAULT_RATIO;
@@ -114,9 +105,9 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 		rl_ratio *= (1.0f - front_ratio);
 		rr_ratio *= (1.0f - front_ratio);
 
-		float32 max_f_ratio = ((fl_ratio > fr_ratio) ? fl_ratio : fr_ratio);
-		float32 max_r_ratio = ((rl_ratio > rr_ratio) ? rl_ratio : rr_ratio);
-		float32 max_ratio = ((max_f_ratio > max_r_ratio) ? max_f_ratio : max_r_ratio);
+		float32 max_f_ratio = MAX(fl_ratio, fr_ratio);
+		float32 max_r_ratio = MAX(rl_ratio, rr_ratio);
+		float32 max_ratio = MAX(max_f_ratio, max_r_ratio);
 
 		RVC.torque.frontLeft = RVC.torque.controlled * (fl_ratio / max_ratio);
 		RVC.torque.frontRight = RVC.torque.controlled * (fr_ratio / max_ratio);
@@ -131,15 +122,10 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 		RVC.torque.rearRight = RVC.torque.controlled;
 	}
 
-	if (RVC.torque.frontLeft < 0)   RVC.torque.frontLeft = 0;
-	if (RVC.torque.frontRight < 0)   RVC.torque.frontRight = 0;
-	if (RVC.torque.rearLeft < 0)   RVC.torque.rearLeft = 0;
-	if (RVC.torque.rearRight < 0)   RVC.torque.rearRight = 0;
-
-	if (RVC.torque.frontLeft > 100)   RVC.torque.frontLeft = 100;
-	if (RVC.torque.frontRight > 100)   RVC.torque.frontRight = 100;
-	if (RVC.torque.rearLeft > 100)   RVC.torque.rearLeft = 100;
-	if (RVC.torque.rearRight > 100)   RVC.torque.rearRight = 100;
+	RVC.torque.frontLeft = clamp(RVC.torque.frontLeft, 0.0f, 100.0f);
+	RVC.torque.frontRight = clamp(RVC.torque.frontRight, 0.0f, 100.0f);
+	RVC.torque.rearLeft = clamp(RVC.torque.rearLeft, 0.0f, 100.0f);
+	RVC.torque.rearRight = clamp(RVC.torque.rearRight, 0.0f, 100.0f);
 }
 
 void RVC_TorqueVectoring_run_mode1(void)
