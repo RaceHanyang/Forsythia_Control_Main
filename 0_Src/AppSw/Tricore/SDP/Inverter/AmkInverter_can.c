@@ -360,9 +360,21 @@ static void invWrite(int i, sint16 torque, boolean accelerating)
 	if (inv[i].inv_on == TRUE)
 	{
 		inv[i].inv_switch.target_velocity		= torque;
-		if (torque == 0)	inv[i].inv_switch.torque_limit_positv 	= 0;
-		else 				inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
-		inv[i].inv_switch.torque_limit_negativ 	= 0;
+		if (torque == 0)
+		{
+			inv[i].inv_switch.torque_limit_positv 	= 0;
+			inv[i].inv_switch.torque_limit_negativ 	= 0;
+		}
+		else if (torque > 0)
+		{
+			inv[i].inv_switch.torque_limit_positv 	= AMK_TORQUE_POSITIVE_LIM;
+			inv[i].inv_switch.torque_limit_negativ 	= 0;
+		}
+		else
+		{
+			inv[i].inv_switch.torque_limit_positv 	= 0;
+			inv[i].inv_switch.torque_limit_negativ 	= AMK_TORQUE_NEGATIVE_LIM;
+		}
 		/*
 		if (torque == 0)	inv[i].inv_switch.torque_limit_negativ 	= 0;
 		else 				inv[i].inv_switch.torque_limit_negativ 	= AMK_TORQUE_NEGATIVE_LIM;

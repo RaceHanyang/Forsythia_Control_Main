@@ -25,19 +25,22 @@
 
 #define TV_ON   TRUE
 
+#define REGEN_ON FALSE
+
 #define FD 0.4f
 
-#define F_RATIO 0.4f      //    R_RATIO = 1 - F_RATIO
+#define F_RATIO 0.375f      //    R_RATIO = 1 - F_RATIO
 #define LR_DEFAULT_RATIO 0.5f
-#define MAX_FL_RATIO 0.7f   //    MIN_FR_RATIO = 1 - MAX_FL_RATIO
-#define MAX_FR_RATIO 0.7f   //    MIN_FL_RATIO = 1 - MAX_FR_RATIO
-#define MAX_RL_RATIO 0.5f   //   MIN_RR_RATIO = 1 - MAX_RL_RATIO
-#define MAX_RR_RATIO 0.5f   //   MIN_RL_RATIO = 1 - MAX_RR_RATIO
+#define MAX_FL_RATIO 0.64f   //    MIN_FR_RATIO = 1 - MAX_FL_RATIO
+#define MAX_FR_RATIO 0.64f   //    MIN_FL_RATIO = 1 - MAX_FR_RATIO
+#define MAX_RL_RATIO 0.6f   //   MIN_RR_RATIO = 1 - MAX_RL_RATIO
+#define MAX_RR_RATIO 0.6f   //   MIN_RL_RATIO = 1 - MAX_RR_RATIO
 
 #define MAX_STA 90.0f
 #define MIN_STA 10.0f
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* Global Variables */
 IFX_EXTERN RVC_t RVC;
@@ -51,6 +54,30 @@ static inline float32 clamp(float32 val, float32 min, float32 max) {
     if (val < min) return min;
     if (val > max) return max;
     return val;
+}
+
+float32 lut1d(float32 x, const float32* x_data, const float32* y_data, int length)
+{
+	if (x <= x_data[0])
+	{
+		return y_data[0];
+	}
+	else if (x >= x_data[length - 1])
+	{
+		return y_data[length - 1];
+	}
+	else
+	{
+		for (int i = 0; i < length - 1; i++)
+		{
+			if (x >= x_data[i] && x < x_data[i + 1])
+			{
+				float32 t = (x - x_data[i]) / (x_data[i + 1] + x_data[i]);
+				return y_data[i] + t * (y_data[i + 1] - y_data[i]);
+			}
+		}
+	}
+	return 0.0f;
 }
 
 void RVC_TorqueVectoring_run_modeOpen(void)
@@ -126,6 +153,29 @@ void RVC_TorqueVectoring_run_modeOpen(void)
 	RVC.torque.frontRight = clamp(RVC.torque.frontRight, 0.0f, 100.0f);
 	RVC.torque.rearLeft = clamp(RVC.torque.rearLeft, 0.0f, 100.0f);
 	RVC.torque.rearRight = clamp(RVC.torque.rearRight, 0.0f, 100.0f);
+
+	if (REGEN_ON)
+	{
+		float32 total_bp = RVC.BrakePressure1.value + RVC.BrakePressure2.value;
+		sint16 min_f_rpm = MIN(RVC.AmkMonitor.MotorVelocity.velocity_FL, RVC.AmkMonitor.MotorVelocity.velocity_FR);
+		sint16 min_r_rpm = MIN(RVC.AmkMonitor.MotorVelocity.velocity_RL, RVC.AmkMonitor.MotorVelocity.velocity_RR);
+		sint16 min_rpm = MIN(min_f_rpm, min_r_rpm);
+		sint16 max_f_rpm = MAX(RVC.AmkMonitor.MotorVelocity.velocity_FL, RVC.AmkMonitor.MotorVelocity.velocity_FR);
+		sint16 max_r_rpm = MAX(RVC.AmkMonitor.MotorVelocity.velocity_RL, RVC.AmkMonitor.MotorVelocity.velocity_RR);
+		float32 max_rpm = (float32)MAX(max_f_rpm, max_r_rpm);
+		if (total_bp > 20 && min_rpm > 100)
+		{
+			RVC.torque.frontLeft = FD * RVC.torque.controlled;
+			RVC.torque.frontRight = FD * RVC.torque.controlled;
+			RVC.torque.rearLeft = RVC.torque.controlled;
+			RVC.torque.rearRight = RVC.torque.controlled;
+
+			RVC.torque.frontLeft = clamp(RVC.torque.frontLeft, -100.0f, 0.0f);
+			RVC.torque.frontRight = clamp(RVC.torque.frontRight, -100.0f, 0.0f);
+			RVC.torque.rearLeft = clamp(RVC.torque.rearLeft, -100.0f, 0.0f);
+			RVC.torque.rearRight = clamp(RVC.torque.rearRight, -100.0f, 0.0f);
+		}
+	}
 }
 
 void RVC_TorqueVectoring_run_mode1(void)
